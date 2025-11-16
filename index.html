@@ -1,0 +1,3499 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Le Club de duels de sorciers</title>
+<link rel="icon" type="image/svg+xml" href="https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Logo_duels_de_sorciers.svg?v=1761218860">
+<style>
+  :root{
+    --bg:#0c1020; --bg-soft:#121735; --bg-soft-2:#171e42;
+    --ink:#f1f3ff; --ink-dim:#cfd5ff; --line:#2b356b;
+    --gold:#D4AF37; --accent:#7a64e5;
+    --tile:72px; --gap:8px; --token:64px;
+    --card-alpha:0.76;
+    --pad:16px;
+  }
+  @media (max-width: 1024px){ :root{ --pad:12px } }
+  @media (max-width: 680px){ :root{ --pad:10px } }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{ margin:0; font-family:system-ui, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--ink); }
+  h1,h2,h3{margin:.2rem 0} button,input,select{font:inherit;color:inherit}
+  button{
+    border:1px solid color-mix(in oklab, var(--gold) 70%, #fff 0%);
+    background: linear-gradient(180deg, color-mix(in oklab, var(--bg-soft) 70%, #000 10%) 0%, var(--bg-soft-2) 100%);
+    color:var(--ink); border-radius:12px; padding:10px 14px; cursor:pointer;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 2px 10px rgba(0,0,0,.25);
+    transition: transform .12s, box-shadow .12s, background .12s, border-color .12s;
+  }
+  button:hover{ transform: translateY(-1px); border-color: color-mix(in oklab, var(--gold) 85%, #fff 0%); box-shadow: 0 6px 18px rgba(0,0,0,.35), 0 0 0 2px rgba(212,175,55,.18) inset; }
+  button[disabled]{opacity:.55;cursor:not-allowed;transform:none}
+  .card{
+    background: rgba(18,23,53,var(--card-alpha)); border:1px solid var(--line); border-radius:14px;
+    box-shadow:0 .5px 3px #00000040, 0 10px 30px rgba(0,0,0,.25); padding:12px; backdrop-filter: blur(4px);
+  }
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .muted{color:var(--ink-dim)}
+  .badge{ display:inline-flex;align-items:center;gap:6px; border:1px solid var(--line); border-radius:999px;padding:4px 10px; background: rgba(23, 30, 66, .55); color:var(--ink-dim)}
+  .container{ max-width: min(1280px, 96vw); margin:auto; padding: var(--pad); }
+  .hpTitle{
+    text-align:center; font-family: "Cinzel","IM Fell English SC","Uncial Antiqua","Cormorant Garamond",Garamond,Georgia,serif;
+    font-weight:800; letter-spacing:.5px; line-height:1.05; margin:6px 0 2px; font-size:clamp(26px,4.6vw,42px);
+    background: linear-gradient(180deg, #f4e6b8 0%, #e2c96e 30%, #d4b247 60%, #b38b22 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 2px 0 rgba(0,0,0,.35), 0 0 18px rgba(212,175,55,.28);
+  }
+  .hpSubtitle{ text-align:center; margin:2px 0; font-family:Georgia,"Times New Roman",Times,serif; font-size:clamp(13px,2.1vw,18px); color:var(--ink-dim) }
+  .hpSubtitle.muted{opacity:.85; font-style:italic}
+  .hpTitle.section{ font-size:clamp(18px,3.2vw,26px); margin:2px 0 6px; text-shadow:0 1px 0 rgba(0,0,0,.35), 0 0 12px rgba(212,175,55,.22); }
+  .goldLine{ height:3px; margin:6px auto 8px; width:min(480px,86%); background:linear-gradient(90deg, transparent, var(--gold), transparent); border-radius:999px; box-shadow:0 0 10px rgba(212,175,55,.35); }
+  .screen{ min-height:100dvh; display:flex; flex-direction:column; gap:var(--pad); }
+  #screenConfig{display:block;position:relative} #screenGame{display:none;position:relative}
+  .configHeader.card{padding-block:10px} .configHeader .hpSubtitle{line-height:1.25} .configHeader .goldLine{margin-block:6px}
+  .configArtHeader{ margin-top:8px; background:rgba(23,30,66,.55); border:1px solid var(--line); border-radius:12px; padding:8px; backdrop-filter:blur(2px) }
+  .configHeader .configArt{ width:100%; display:flex; justify-content:center; align-items:center; border-radius:10px; max-height:28vh }
+  .configHeader .configArt video{ width:100%; height:auto; max-height:28vh; object-fit:contain; display:block; border-radius:10px; background:#0b0f23 }
+  @media (max-height:780px){ .configHeader .configArt{max-height:24vh} .configHeader .configArt video{max-height:24vh} }
+  @media (max-height:680px){ .configHeader .configArt{max-height:20vh} .configHeader .configArt video{max-height:20vh} }
+  .configMain{ display:grid; grid-template-columns:1fr 1fr; gap:var(--pad); flex:1 1 auto; min-height:0 }
+  @media (max-width:960px){ .configMain{ grid-template-columns:1fr } }
+  .configCol{ display:flex; flex-direction:column; gap:var(--pad); min-height:0 }
+  .configCardGrow{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; gap:10px }
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media (max-width:960px){ .grid3{grid-template-columns:1fr} }
+
+  #screenGame::before{
+    content:"";position:fixed;inset:0;
+    background-image:url("https://cdn.shopify.com/s/files/1/0934/1416/2771/files/ChatGPT_Image_23_oct._2025_07_29_44.png?v=1761198416");
+    background-size:cover;background-position:center;filter:blur(6px) brightness(.65) saturate(1.05);transform:scale(1.03);z-index:-2;
+  }
+  #screenGame::after{content:"";position:fixed;inset:0;background:radial-gradient(1200px 600px at 50% 40%,rgba(12,16,32,.08),rgba(12,16,32,.6));z-index:-1}
+  .gameHeader.card{padding-block:10px;margin-bottom:8px;background:rgba(18,23,53,.88)}
+  .gameLayout{ display:grid; grid-template-columns:1fr minmax(560px,2fr) 1fr; gap:var(--pad); align-items:start }
+  @media (max-width:1100px){ .gameLayout{grid-template-columns:1fr} }
+  #boardWrap{display:flex;flex-direction:column;align-items:center}
+  .board{ --cols:13; --path-cols:9; display:grid; gap:var(--gap); grid-template-columns:repeat(var(--cols), var(--tile)); grid-auto-rows:var(--tile); place-content:center; width:100%; overflow:visible }
+  .tile{
+    position:relative; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    border:1px solid rgba(212,175,55,.28); background:#10163a; background-position:center; background-repeat:no-repeat; background-size:contain;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.03), 0 3px 10px rgba(0,0,0,.35);
+  }
+  .tile.question{ background-image:url("https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Case_question.svg?v=1760946610"); }
+  .tile.spell{ background-image:url("https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Case_sort.svg?v=1760946610"); }
+  .tile.start{ background-image:url("https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Case_de_depart.svg?v=1760946610"); }
+  .tile.center{ background-image:url("https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Case_finale.svg?v=1760946610"); background-size:cover; position:relative; border:none; }
+  .tile.center::after{
+    content:""; position:absolute; inset:-6px; border:3px solid var(--gold); border-radius:14px; pointer-events:none;
+    box-shadow:0 0 14px rgba(212,175,55,.55), inset 0 0 8px rgba(255,255,255,.25); animation:goldGlow 3.5s ease-in-out infinite;
+  }
+  @keyframes goldGlow{ 0%,100%{box-shadow:0 0 12px rgba(212,175,55,.45), inset 0 0 8px rgba(255,255,255,.25)} 50%{box-shadow:0 0 16px rgba(212,175,55,.75), inset 0 0 10px rgba(255,255,255,.35)} }
+  .tile .idx{ position:absolute; right:4px; bottom:4px; font-size:10px; line-height:1; padding:2px 4px; border-radius:5px; background:#00000066; color:#fff }
+  .tokens{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:8px; pointer-events:none }
+  .tokenIcon{
+    width:calc(var(--token)*1.15); height:calc(var(--token)*1.15); display:inline-block; border-radius:14px; pointer-events:auto;
+    outline:2px solid rgba(255,255,255,.8); -webkit-mask-position:center; -webkit-mask-repeat:no-repeat; -webkit-mask-size:contain;
+    mask-position:center; mask-repeat:no-repeat; mask-size:contain; background-color:#fff;
+    background-image:linear-gradient(145deg,#fff 0%,#ccc 50%,#888 100%);
+    box-shadow: inset 0 0 6px rgba(255,255,255,.6), 0 3px 10px rgba(0,0,0,.4);
+    transition: transform .25s, box-shadow .25s; animation: metalShine 3s ease-in-out infinite;
+  }
+  .tokenIcon:hover{ transform:scale(1.15) rotate(2deg); box-shadow:0 6px 18px rgba(0,0,0,.55), inset 0 0 12px rgba(255,255,255,.85) }
+  .tokenIcon.gryffondor{ background-image:linear-gradient(145deg,#ffcc66 0%,#b33 45%,#400 100%); box-shadow:inset 0 0 8px rgba(255,230,150,.6), inset 0 0 14px rgba(255,90,50,.5), 0 3px 12px rgba(255,150,80,.35) }
+  .tokenIcon.serdaigle{ background-image:linear-gradient(145deg,#aaccff 0%,#4a69bd 50%,#1b2b6f 100%); box-shadow:inset 0 0 8px rgba(170,210,255,.6), inset 0 0 14px rgba(90,120,255,.5), 0 3px 12px rgba(100,150,255,.35) }
+  .tokenIcon.poufsouffle{ background-image:linear-gradient(145deg,#fff2a3 0%,#ffcf33 50%,#b89000 100%); box-shadow:inset 0 0 8px rgba(255,250,200,.7), inset 0 0 14px rgba(255,210,90,.5), 0 3px 12px rgba(255,210,80,.35) }
+  .tokenIcon.serpentard{ background-image:linear-gradient(145deg,#baffc1 0%,#32a852 45%,#004d26 100%); box-shadow:inset 0 0 8px rgba(180,255,200,.6), inset 0 0 14px rgba(70,230,120,.5), 0 3px 12px rgba(70,200,120,.35) }
+  .tokenB{ outline:2px solid rgba(255,255,255,.9) }
+  @keyframes metalShine{ 0%,100%{filter:brightness(1) contrast(1)} 50%{filter:brightness(1.35) contrast(1.15)} }
+
+  .qa{margin-top:12px; --accent:#888; position:relative; overflow:hidden}
+  .qa .turnHeader{ font-weight:700; padding:8px 10px; border-radius:10px; display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; background:linear-gradient(180deg, rgba(122,100,229,.25), rgba(24,27,70,.25)); border:1px solid rgba(122,100,229,.25) }
+  .qa.active .turnHeader{ background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 35%, transparent), rgba(24,27,70,.4)); border-color:rgba(122,100,229,.55); box-shadow:0 0 0 2px rgba(122,100,229,.15) inset }
+  .qa.inactive .turnHeader{opacity:.8}
+  .qa .readyBox{display:flex;align-items:center;gap:12px;justify-content:center}
+  .qa .questionBox{display:none}
+  .qa .choices{display:grid;gap:8px;margin-top:8px}
+  .qa .choices button{text-align:left}
+  .qa .freeRow{display:flex;gap:8px;margin-top:8px}
+  .qa .waitingBox{display:none; text-align:center; padding:6px 4px; color:var(--ink-dim); font-style:italic}
+  .spellChoice{ display:none; margin-top:10px } .spellChoice.show{ display:block }
+  .spellIntro{
+    position:relative; padding:10px; border-radius:12px; background: rgba(212,175,55,.08);
+    border:1px dashed rgba(212,175,55,.45); display:flex; align-items:center; gap:10px; justify-content:center; overflow:hidden;
+  }
+  .spellIntro::before{
+    content:""; position:absolute; inset:-40%;
+    background: conic-gradient(from 0deg, rgba(255,255,255,.0) 0 10%, rgba(212,175,55,.25) 10% 20%, rgba(255,255,255,.0) 20% 30%, rgba(212,175,55,.25) 30% 40%, rgba(255,255,255,.0) 40% 50%, rgba(212,175,55,.25) 50% 60%, rgba(255,255,255,.0) 60% 70%, rgba(212,175,55,.25) 70% 80%, rgba(255,255,255,.0) 80% 90%, rgba(212,175,55,.25) 90% 100%);
+    filter: blur(6px); animation: swirl 2.8s linear infinite;
+  }
+  @keyframes swirl{ to{ transform: rotate(360deg) } }
+  .spellOptions{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:10px }
+  .spellCard{ border:1px solid rgba(230,216,184,.35); border-radius:12px; padding:10px; background:rgba(10,10,25,.35); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:8px; min-height:128px; transition: transform .12s, box-shadow .12s, border-color .12s, background .12s }
+  .spellCard:hover{ transform: translateY(-2px); box-shadow:0 2px 18px rgba(0,0,0,.25); background:rgba(10,10,25,.55) }
+  .spellCard.selected{ border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,175,55,.22) inset }
+  .spellIcon{ width:64px; height:64px; background-position:center; background-repeat:no-repeat; background-size:contain }
+  .spellName{ font-weight:700; text-align:center; font-size:clamp(12px,1.8vw,14px); line-height:1.15; max-width:100%; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; word-break:break-word }
+  .spellActions{ display:flex; justify-content:flex-end; margin-top:10px }
+  .castPulse{ animation: castPulse .8s ease-out 1 }
+  @keyframes castPulse{ 0%{ box-shadow:0 0 0 0 rgba(212,175,55,.0) } 50%{ box-shadow:0 0 0 10px rgba(212,175,55,.25) } 100%{ box-shadow:0 0 0 0 rgba(212,175,55,.0) } }
+
+  .spellPopup{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:10000 }
+  .spellPopup.show{ display:flex }
+  .spellOverlay{ position:absolute; inset:0; background:rgba(5,8,20,.45); backdrop-filter: blur(1px) }
+  .spellBox{
+    position:relative; background: rgba(18, 23, 53, .92); border:2px solid var(--gold); border-radius:16px;
+    padding:14px 18px; text-align:center; max-width:min(92vw, 520px); box-shadow:0 12px 40px rgba(0,0,0,.35), 0 0 0 6px rgba(255,255,255,.06) inset;
+    transform:scale(.9); opacity:0; animation: popIn .4s ease-out forwards; color:var(--ink);
+  }
+  .spellTitle{ font-weight:800; margin-bottom:6px; font-size:clamp(16px,2.4vw,20px); word-break:break-word; font-family:"Cinzel","IM Fell English SC","Uncial Antiqua",Georgia,serif; letter-spacing:.3px }
+  .spellImg{ width:140px; height:140px; margin:4px auto 0; background-position:center; background-size:contain; background-repeat:no-repeat; transform: scale(.2) rotate(-12deg); opacity:0; animation: burst 1.35s .28s cubic-bezier(.17,.67,.13,1.01) forwards }
+  .spellBox::after{
+    content:""; position:absolute; left:50%; top:58%; width:10px; height:10px; border-radius:50%;
+    background: radial-gradient(circle, rgba(255,235,155,.9) 0 30%, rgba(255,198,66,.55) 30% 60%, rgba(255,235,155,0) 60%);
+    transform: translate(-50%,-50%) scale(1); opacity:0; filter:blur(6px); animation: boom 1.05s .45s ease-out forwards;
+  }
+  @keyframes popIn{ from{transform:scale(.9); opacity:0} to{transform:scale(1); opacity:1} }
+  @keyframes burst{ 0%{opacity:0; transform: scale(.2) rotate(-18deg)} 60%{opacity:1; transform: scale(1.18) rotate(6deg)} 100%{opacity:1; transform: scale(1) rotate(0)} }
+  @keyframes boom{ 0%{ opacity:.7; transform: translate(-50%,-50%) scale(.6); filter:blur(6px) } 100%{ opacity:0; transform: translate(-50%,-50%) scale(1.75); filter:blur(14px) } }
+
+  .help{display:none;margin-top:8px;font-size:13px;color:var(--ink-dim)}
+
+  .victoryPopup{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:20000 }
+  .victoryPopup.show{ display:flex }
+  .victoryOverlay{ position:absolute; inset:0; background: radial-gradient(circle, rgba(10,10,25,0.9), rgba(0,0,0,0.85)); backdrop-filter: blur(3px) }
+  .victoryBox{
+    position:relative; z-index:2; background:rgba(18,23,53,0.95); border:2px solid var(--gold); border-radius:18px;
+    padding:24px 30px; text-align:center; color:var(--ink); font-family:"Cinzel",serif; animation:victoryPop .8s ease-out forwards;
+    box-shadow:0 0 30px rgba(212,175,55,.35), inset 0 0 12px rgba(255,255,255,.08);
+  }
+  @keyframes victoryPop{ 0%{ transform:scale(.3) rotate(-10deg); opacity:0 } 60%{ transform:scale(1.1) rotate(3deg); opacity:1 } 100%{ transform:scale(1) rotate(0) } }
+  .victoryBox h2{
+    font-size:clamp(22px,5vw,34px); margin:0 0 16px;
+    background:linear-gradient(180deg,#fff6b0,#d4af37 70%,#a8831f); -webkit-background-clip:text; color:transparent; text-shadow:0 0 12px rgba(212,175,55,.4)
+  }
+  .victoryBox button{ background:linear-gradient(180deg,var(--gold),#b38b22); color:#0c1020; border:none; border-radius:10px; padding:10px 16px; font-weight:bold; cursor:pointer; box-shadow:0 4px 14px rgba(212,175,55,.35); transition:transform .15s }
+  .victoryBox button:hover{ transform:scale(1.05) }
+  .confettiWrap{ position:absolute; inset:0; overflow:visible; pointer-events:none }
+  .confetti{ position:absolute; width:8px; height:12px; border-radius:2px; animation:confettiFall 2.8s ease-in forwards }
+  @keyframes confettiFall{ 0%{ transform:translateY(0) rotate(0); opacity:1 } 100%{ transform:translateY(200px) rotate(720deg); opacity:0 } }
+  @keyframes victoryLogoBurst{ 0%{ opacity:0; transform:scale(.2) rotate(-12deg) } 60%{ opacity:1; transform:scale(1.15) rotate(5deg) } 100%{ opacity:1; transform:scale(1) rotate(0) } }
+  #victoryTokenMount{ display:flex;justify-content:center;align-items:center;margin:4px auto 10px }
+  .tokenIcon.victoryToken{ width:clamp(96px,18vw,160px); height:clamp(96px,18vw,160px); border-radius:16px; filter:drop-shadow(0 6px 18px rgba(0,0,0,.35)); transform:scale(.2) rotate(-12deg); opacity:0; animation:victoryLogoBurst 900ms cubic-bezier(.17,.67,.13,1.01) forwards }
+
+  input,select{
+    background:#0e1431;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:6px;
+    color:var(--ink);
+  }
+</style>
+</head>
+<body>
+
+<section id="screenConfig" class="container screen">
+  <div class="card configHeader">
+    <h1 class="hpTitle">Le Club de duels de sorciers</h1>
+    <div class="goldLine"></div>
+    <p class="hpSubtitle">Affrontez un élève de Poudlard en vous lançant des sorts et en répondant à des questions thématiques.</p>
+    <p class="hpSubtitle muted">Configure ta partie et lance le duel&nbsp;!</p>
+    <div class="configArtHeader">
+      <div class="configArt">
+        <video id="configVideo" preload="auto" muted playsinline autoplay>
+          <source src="https://cdn.shopify.com/videos/c/o/v/81457692184f421f967c5719cfe65f35.mp4" type="video/mp4">
+          Votre navigateur ne supporte pas la vidéo HTML5.
+        </video>
+      </div>
+    </div>
+  </div>
+
+  <div class="configMain">
+    <!-- Colonne Difficulté du robot -->
+    <div class="configCol">
+      <div class="card configCardGrow">
+        <h3 class="hpTitle section">Puissance magique de l'adversaire</h3>
+        <p class="muted" style="margin-top:6px">
+          Choisis à quel point l’élève de Poudlard adverse est doué en magie et en théorie.
+        </p>
+
+        <div class="row" style="margin-top:10px">
+          <label for="botLevel" class="muted">Niveau du robot :</label>
+          <select id="botLevel">
+            <option value="facile">Facile – se trompe assez souvent</option>
+            <option value="moyen" selected>Moyen – se trompe peu</option>
+            <option value="difficile">Difficile – se trompe très rarement</option>
+            <option value="tresdifficile">Très difficile – ne se trompe jamais</option>
+          </select>
+        </div>
+
+        <div id="qInfo" class="badge" style="margin-top:8px">
+          Niveau actuel : Moyen
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne Plateau & joueurs -->
+    <div class="configCol">
+      <div class="card configCardGrow">
+        <h3 class="hpTitle section">Plateau et joueurs</h3>
+        <div class="grid3">
+          <!-- Longueur -->
+          <div>
+            <div class="muted">Longueur par joueur (multiples de 3)</div>
+            <div class="row">
+              <input id="laneLen" type="number" min="12" max="18" step="3" value="12" style="width:100px"/>
+              <span class="badge">Min 12 · Max 18</span>
+            </div>
+          </div>
+
+          <!-- Joueur humain -->
+          <div>
+            <div class="muted">Ton joueur</div>
+            <div class="row">
+              <span style="width:14px;height:14px;border-radius:50%;background:#C0392B;display:inline-block"></span>
+              Nom : <input id="p1name" value="Joueur 1" style="width:150px">
+            </div>
+            <div class="row">Maison :
+              <select id="p1house">
+                <option value="rouge" selected>Gryffondor (rouge)</option>
+                <option value="jaune">Poufsouffle (jaune)</option>
+                <option value="bleu">Serdaigle (bleu)</option>
+                <option value="vert">Serpentard (vert)</option>
+              </select>
+            </div>
+            <div class="row">Pion :
+              <select id="p1pawn"></select>
+            </div>
+          </div>
+
+          <!-- Robot -->
+          <div>
+            <div class="muted">Adversaire (robot)</div>
+            <div class="row">
+              <span style="width:14px;height:14px;border-radius:50%;background:#2E86C1;display:inline-block"></span>
+              Nom : <span id="botName" class="badge">Élève de Poudlard</span>
+            </div>
+            <div class="row">Maison :
+              <span id="botHouse" class="badge">—</span>
+            </div>
+            <div class="row">Pion :
+              <span id="botPawn" class="badge">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px;justify-content:flex-end">
+          <button id="btnStart">Lancer la partie</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="screenGame" class="container screen">
+  <div class="card gameHeader">
+    <h2 class="hpTitle" style="font-size:clamp(24px,4.2vw,38px)">Le Club de duels de sorciers</h2>
+    <div class="goldLine" style="margin-top:6px"></div>
+  </div>
+
+  <div class="gameLayout">
+    <!-- Joueur A -->
+    <div>
+      <aside class="card playerPanel" id="panelA">
+        <h3 id="nameA">Joueur 1</h3>
+        <div class="row pawnPreview">
+          <span>Maison :</span> <span id="houseA" class="badge">rouge</span>
+          <span id="previewA" class="tokenIcon" title="Pion J1"></span>
+        </div>
+        <div class="row"><span class="badge">Boucliers : <b id="shieldA">0</b></span></div>
+        <div class="row"><span class="badge">Effets : <span id="effectsA" class="muted">—</span></span></div>
+        <div class="row"><span class="badge">Position : <b id="posA">0</b> / <span id="lenA">12</span></span></div>
+        <div class="row"><span class="badge">Tour : <b id="turnA">—</b></span></div>
+      </aside>
+
+      <div class="card qa inactive" id="qaA">
+        <div class="turnHeader" id="turnHdrA"><span id="turnTitleA">En attente de l’adversaire…</span></div>
+        <div class="readyBox" id="readyA">
+          <span id="readyTextA">Joueur : êtes-vous prêt ?</span>
+          <button id="btnReadyA">Oui</button>
+        </div>
+        <div class="waitingBox" id="waitA"><em>En attente de l’adversaire…</em></div>
+        <div class="questionBox" id="questionA">
+          <div class="row" style="justify-content:space-between">
+            <div><b id="qPlayerA">Joueur</b> — <span id="qInfoTextA" class="muted">Question</span></div>
+            <div class="muted" id="qHintA"></div>
+          </div>
+          <div id="qPromptA" style="margin-top:6px">…</div>
+          <div id="qChoicesA" class="choices"></div>
+          <div id="qFreeA" class="freeRow" style="display:none">
+            <input id="qInputA" placeholder="Tape ta réponse…" style="flex:1" />
+            <button id="qSubmitA">Valider</button>
+          </div>
+        </div>
+
+        <div class="spellChoice" id="spellBoxA">
+          <div class="spellIntro"><b>✨ Choisis ton sort ✨</b></div>
+          <div class="spellOptions" id="spellOptionsA"></div>
+          <div class="spellActions"><button id="spellCastA" disabled>Lancer le sort</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plateau -->
+    <main class="card" id="boardWrap" style="background:rgba(18,23,53,.88)">
+      <div id="board" class="board"></div>
+
+      <div class="card" style="margin-top:12px;background:rgba(12,16,32,.6)">
+        <div class="row" style="justify-content:center;gap:12px">
+          <button id="btnSpellInfo">Infos sur les sorts</button>
+          <span id="lastInfo" class="badge">Partie démarrée.</span>
+        </div>
+        <div id="spellHelp" class="help">
+          <ul>
+            <li><b>Expelliarmus</b> : l’adversaire recule d’1 case.</li>
+            <li><b>Protego</b> : tu gagnes 1 bouclier persistant qui bloque le prochain sort reçu (cumulable).</li>
+            <li><b>Stupefix</b> : l’adversaire recule de 2 cases.</li>
+            <li><b>Confundus</b> : à son prochain tour, l’adversaire doit répondre à 2 questions.</li>
+            <li><b>Petrificus totalus</b> : l’adversaire passe son prochain tour.</li>
+            <li><b>Accio</b> : tu avances de 2 cases vers le centre.</li>
+            <li><b>Oubliettes</b> : prochaine question de l’adversaire en réponse libre (pendant 1 tour).</li>
+            <li><b>Tarantallegra</b> : à sa prochaine bonne réponse, l’adversaire n’avance pas.</li>
+            <li><b>Bombarda</b> : si un bouclier protège l’adversaire, il est brisé et l’adversaire recule d’1 case ; sinon l’adversaire recule de 2 cases.</li>
+            <li><b>Assurdiato</b> : au prochain tour, l’adversaire voit les réponses mais pas l’énoncé.</li>
+            <li><b>Arresto momentum</b> : l’adversaire n’a que 5 secondes pour sa prochaine question.</li>
+          </ul>
+        </div>
+      </div>
+    </main>
+
+    <!-- Joueur B (robot) -->
+    <div>
+      <aside class="card playerPanel" id="panelB">
+        <h3 id="nameB">Élève de Poudlard</h3>
+        <div class="row pawnPreview">
+          <span>Maison :</span> <span id="houseB" class="badge">bleu</span>
+          <span id="previewB" class="tokenIcon" title="Pion J2"></span>
+        </div>
+        <div class="row"><span class="badge">Boucliers : <b id="shieldB">0</b></span></div>
+        <div class="row"><span class="badge">Effets : <span id="effectsB" class="muted">—</span></span></div>
+        <div class="row"><span class="badge">Position : <b id="posB">0</b> / <span id="lenB">12</span></span></div>
+        <div class="row"><span class="badge">Tour : <b id="turnB">—</b></span></div>
+      </aside>
+
+      <div class="card qa inactive" id="qaB">
+        <div class="turnHeader" id="turnHdrB"><span id="turnTitleB">En attente de l’adversaire…</span></div>
+        <div class="readyBox" id="readyB">
+          <span id="readyTextB">Robot prêt.</span>
+        </div>
+        <div class="waitingBox" id="waitB"><em>En attente de l’adversaire…</em></div>
+        <div class="questionBox" id="questionB">
+          <div class="row" style="justify-content:space-between">
+            <div><b id="qPlayerB">Élève de Poudlard</b> — <span id="qInfoTextB" class="muted">Question</span></div>
+            <div class="muted" id="qHintB"></div>
+          </div>
+          <div id="qPromptB" style="margin-top:6px">…</div>
+          <div id="qChoicesB" class="choices"></div>
+          <div id="qFreeB" class="freeRow" style="display:none">
+            <input id="qInputB" placeholder="Réponse du robot…" style="flex:1" />
+            <button id="qSubmitB">Valider</button>
+          </div>
+        </div>
+
+        <div class="spellChoice" id="spellBoxB">
+          <div class="spellIntro"><b>✨ Choix du sort du robot ✨</b></div>
+          <div class="spellOptions" id="spellOptionsB"></div>
+          <div class="spellActions"><button id="spellCastB" disabled>Lancer le sort</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Popup sort -->
+<div class="spellPopup" id="spellPopup" aria-hidden="true">
+  <div class="spellOverlay"></div>
+  <div class="spellBox" role="dialog" aria-live="polite" aria-atomic="true">
+    <div class="spellTitle" id="spTitle">—</div>
+    <div class="spellImg" id="spImg" aria-hidden="true"></div>
+  </div>
+</div>
+
+<!-- Popup victoire -->
+<div class="victoryPopup" id="victoryPopup">
+  <div class="victoryOverlay"></div>
+  <div class="victoryBox">
+    <div id="victoryTokenMount" aria-hidden="true"></div>
+    <h2 id="victoryMsg">—</h2>
+    <button id="btnRestart">Nouveau duel</button>
+    <div class="confettiWrap" id="confettiWrap"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- Pions & maisons ---------- */
+const PAWNS = {
+  'Chapeau':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Chapeau.svg?v=1760946609',
+  'Chouette':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Chouette.svg?v=1760946609',
+  'Serpent':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Serpent.svg?v=1760946611',
+  'Clé volante':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Cle_volante.svg?v=1760946610',
+  "Vif d'or":"https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Vif_d_or.svg?v=1760946610",
+  'Baguette':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Baguette.svg?v=1760946610',
+  'Éclair':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Eclair.svg?v=1760946610',
+  'Balais':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Balais.svg?v=1760946610',
+  'Lunettes':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Lunettes.svg?v=1760946609',
+  'Dragon':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/Dragon.svg?v=1760946610'
+};
+const COLORS={rouge:'#C0392B',jaune:'#F1C40F',bleu:'#2E86C1',vert:'#27AE60'};
+
+/* ---------- Sorts + icônes ---------- */
+const SPELLS=[
+  'Accio','Expelliarmus','Protego','Stupefix','Oubliettes','Confundus','Petrificus totalus',
+  'Tarantallegra','Bombarda','Assurdiato','Arresto momentum'
+];
+const SPELL_ICONS={
+  'Accio':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/ACCIO.svg?v=1761159217',
+  'Expelliarmus':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/EXPELLIARMUS_fd4e6cbf-a317-44df-8235-1237fce733a2.svg?v=1761159218',
+  'Stupefix':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/STUPEFIX_72b6ef3d-520c-4d7b-9a74-48d412867bb7.svg?v=1761159218',
+  'Petrificus totalus':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/PETRIFICUS_TOTALUS.svg?v=1761159219',
+  'Oubliettes':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/OUBLIETTES_dccdda41-09fe-40d8-8ae4-b246ba9df3eb.svg?v=1761159218',
+  'Confundus':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/CONFUNDUS_19a40313-a6e2-4d28-ab16-3b7c33f4dcc1.svg?v=1761159219',
+  'Protego':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/PROTEGO_26579a15-d81f-4b33-b829-11654f9407ca.svg?v=1761159219',
+  'Tarantallegra':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/TARANTALLEGRA.svg?v=1761332376',
+  'Bombarda':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/BOMBARDA.svg?v=1761332375',
+  'Assurdiato':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/ASSURDIATO.svg?v=1761332376',
+  'Arresto momentum':'https://cdn.shopify.com/s/files/1/0934/1416/2771/files/ARRESTO_MOMENTUM.svg?v=1761332376'
+};
+
+/* ---------- Questions intégrées ---------- */
+const QUESTIONS = [
+  {
+    id:'q1',
+    prompt:"Si Paul est plus grand que Léa et Léa est plus grande que Tom, qui est le plus petit ?",
+    choices:["Tom","Paul","Léa","Impossible à dire"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q2',
+    prompt:"Quel nombre complète la suite : 2, 4, 6, 8, … ?",
+    choices:["10","9","12","7"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q3',
+    prompt:"Quel nombre ne fait PAS partie de la suite : 3, 6, 9, 12, 15, 20 ?",
+    choices:["20","15","9","6"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q4',
+    prompt:"Si un carré a 4 côtés, combien de côtés ont 3 carrés ?",
+    choices:["12","9","4","6"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q5',
+    prompt:"Quel est l’intrus : chien, chat, vache, chaise ?",
+    choices:["chaise","chien","chat","vache"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q6',
+    prompt:"On ajoute 3 puis on enlève 1 : si on part de 5, on obtient…",
+    choices:["7","8","6","5"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q7',
+    prompt:"Quel mot commence par la même lettre que “porte” ?",
+    choices:["pomme","carte","table","couteau"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q8',
+    prompt:"Dans la phrase “Le chat de Sophie dort”, qui dort ?",
+    choices:["le chat","Sophie","les deux","impossible à dire"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q9',
+    prompt:"Si un objet coûte 4 €, combien coûtent 3 objets identiques ?",
+    choices:["12€","8€","4€","6€"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q10',
+    prompt:"Quel nombre complète la suite : 1, 1, 2, 3, 5, … ?",
+    choices:["8","7","6","9"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q11',
+    prompt:"Quel est l’intrus : carré, triangle, cercle, pomme ?",
+    choices:["pomme","triangle","cercle","carré"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q12',
+    prompt:"Si lundi est avant mardi, quel jour vient après mardi ?",
+    choices:["mercredi","jeudi","lundi","vendredi"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q13',
+    prompt:"Quel animal n’a pas de pattes ?",
+    choices:["serpent","chat","lion","vache"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q14',
+    prompt:"Si un train arrive à 10h et repart à 11h, il reste…",
+    choices:["1 heure","2 heures","30 minutes","3 heures"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q15',
+    prompt:"Quel nombre est le plus grand ?",
+    choices:["98","89","79","70"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q16',
+    prompt:"Quel nombre est situé entre 30 et 40 ?",
+    choices:["35","29","41","20"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q17',
+    prompt:"Si Pierre a 3 pommes et qu’il en mange 1, combien lui en reste-t-il ?",
+    choices:["2","3","1","4"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q18',
+    prompt:"Quel est l’intrus : rouge, bleu, voiture, vert ?",
+    choices:["voiture","rouge","bleu","vert"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q19',
+    prompt:"Un rectangle a…",
+    choices:["4 côtés","3 côtés","5 côtés","6 côtés"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q20',
+    prompt:"Complete la suite : A, C, E, G, … ?",
+    choices:["I","H","K","J"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q21',
+    prompt:"Que représente 50 % d'un groupe ?",
+    choices:["la moitié","le quart","tout","un dixième"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q22',
+    prompt:"Dans “Luc mange une pomme rouge”, quel mot désigne la couleur ?",
+    choices:["rouge","pomme","mange","luc"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q23',
+    prompt:"Quel objet est utilisé pour mesurer une longueur ?",
+    choices:["règle","compas","gomme","crayon"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q24',
+    prompt:"Quel est l’intrus : 12, 18, 24, 35 ?",
+    choices:["35","12","18","24"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q25',
+    prompt:"Si on double 7, on obtient…",
+    choices:["14","12","21","9"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q26',
+    prompt:"Si une pizza est coupée en 8 parts, quelle fraction représente 4 parts ?",
+    choices:["1/2","1/4","2/3","3/4"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q27',
+    prompt:"Quel mot signifie le contraire de “ouvert” ?",
+    choices:["fermé","grand","bruyant","petit"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q28',
+    prompt:"Quel mot signifie le contraire de “rapide” ?",
+    choices:["lent","fort","bien","beaucoup"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q29',
+    prompt:"Si Pierre a plus d’argent que Luc, et Luc plus que Léa, qui a le moins ?",
+    choices:["Léa","Pierre","Luc","Impossible à dire"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q30',
+    prompt:"Quel nombre complète : 5, 10, 20, 40, … ?",
+    choices:["80","70","60","50"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q31',
+    prompt:"Quel nombre complète : 9, 7, 5, 3, … ?",
+    choices:["1","2","0","−1"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q32',
+    prompt:"Quel est l’intrus : hiver, printemps, soleil, automne ?",
+    choices:["soleil","hiver","printemps","automne"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q33',
+    prompt:"Lequel est un fruit ?",
+    choices:["pomme","salade","carotte","pain"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q34',
+    prompt:"Quel animal vit dans l’eau ?",
+    choices:["poisson","chat","chien","cheval"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q35',
+    prompt:"Si tu dois lire les consignes AVANT de commencer, tu dois…",
+    choices:["lire puis agir","agir puis lire","ne rien faire","demander"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q36',
+    prompt:"Si une activité dure 30 minutes, combien de minutes pour 2 activités identiques ?",
+    choices:["60","30","45","90"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q37',
+    prompt:"Quel objet permet de dire l’heure ?",
+    choices:["montre","crayon","lampe","papier"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q38',
+    prompt:"Quel est l’intrus : 2, 4, 8, 9 ?",
+    choices:["9","2","4","8"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q39',
+    prompt:"Quel est l’intrus : bois, verre, pierre, chocolat ?",
+    choices:["chocolat","bois","verre","pierre"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q40',
+    prompt:"Dans “Le chien court vite”, quel mot indique comment il court ?",
+    choices:["vite","chien","court","le"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q41',
+    prompt:"Si 3 enfants partagent 12 bonbons équitablement, chacun reçoit…",
+    choices:["4","3","2","5"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q42',
+    prompt:"Quel nombre est impair ?",
+    choices:["13","12","20","18"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q43',
+    prompt:"Quel est l’intrus : Portugal, Italie, Europe, Espagne ?",
+    choices:["Europe","Italie","Portugal","Espagne"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q44',
+    prompt:"Si une suite augmente de 2 à chaque fois, après 14 vient…",
+    choices:["16","15","18","20"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q45',
+    prompt:"Si un triangle a 3 côtés, combien en ont 2 triangles ?",
+    choices:["6","3","5","4"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q46',
+    prompt:"Quel est l’intrus : marcher, courir, sauter, lent ?",
+    choices:["lent","marcher","courir","sauter"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q47',
+    prompt:"Quel est le contraire de “haut” ?",
+    choices:["bas","grand","pesant","lourd"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q48',
+    prompt:"Quel est le contraire de “noir” ?",
+    choices:["blanc","gris","bleu","transparent"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q49',
+    prompt:"Quel nombre complète : 4, 9, 16, 25, … ?",
+    choices:["36","30","32","28"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q50',
+    prompt:"Dans une suite de lettres : B, D, F, H,… quelle lettre suit ?",
+    choices:["J","K","I","L"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q51',
+    prompt:'Le nom "aqua, ae" appartient à…',
+    choices:["la 1re déclinaison","la 2e déclinaison","la 3e déclinaison","la 4e déclinaison"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q52',
+    prompt:'Le nom "bellum, i" appartient à…',
+    choices:["la 2e déclinaison neutre","la 1re déclinaison","la 3e déclinaison","la 5e déclinaison"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q53',
+    prompt:'Le nom "animus, i" est de…',
+    choices:["la 2e déclinaison masc.","la 1re déclinaison","la 2e déclinaison neutre","la 3e déclinaison"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q54',
+    prompt:'Le nom "ager, agri" est de…',
+    choices:["la 2e déclinaison masc.","la 1re déclinaison","la 3e déclinaison","la 5e déclinaison"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q55',
+    prompt:'Le mot "puella, ae" appartient à…',
+    choices:["la 1re déclinaison","la 2e déclinaison masc.","la 2e déclinaison neutre","la 3e déclinaison"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q56',
+    prompt:'Le mot "dominus, i" appartient à…',
+    choices:["la 2e déclinaison masc.","la 1re déclinaison","la 3e déclinaison","la 4e déclinaison"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q57',
+    prompt:'Le mot "oppidum, i" appartient à…',
+    choices:["la 2e déclinaison neutre","la 1re déclinaison","la 2e déclinaison masc.","la 3e déclinaison"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q58',
+    prompt:'Quel genre possède "bellum, i" ?',
+    choices:["neutre","masculin","féminin","invariable"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q59',
+    prompt:'Quel genre possède "animus, i" ?',
+    choices:["masculin","féminin","neutre","invariable"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q60',
+    prompt:'Quel est le sens de "aqua" ?',
+    choices:["eau","air","feu","terre"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q61',
+    prompt:'Quel est le sens de "corpus, oris" ?',
+    choices:["corps","coeur","tête","bras"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q62',
+    prompt:'Quel est le sens de "bellum" ?',
+    choices:["guerre","beau","ciel","fort"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q63',
+    prompt:'Quel est le sens de "animus" ?',
+    choices:["esprit","animal","air","force"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q64',
+    prompt:'Quel est le sens de "accipere" ?',
+    choices:["recevoir","accepter","apprendre","partir"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q65',
+    prompt:'Que signifie la préposition "cum" ?',
+    choices:["avec","sans","pour","vers"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q66',
+    prompt:'Que signifie la préposition "ab/ a" ?',
+    choices:["depuis","vers","à travers","contre"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q67',
+    prompt:'Quel cas exige "cum" ?',
+    choices:["ablatif","accusatif","génitif","vocatif"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q68',
+    prompt:'Quel cas exige "ab / a" ?',
+    choices:["ablatif","accusatif","génitif","datif"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q69',
+    prompt:'Quel mot français vient de "aqua" ?',
+    choices:["aquatique","aqueux","aquarium","tous"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q70',
+    prompt:'Quel mot français vient de "corpus" ?',
+    choices:["corporel","corporation","corps","tous"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q71',
+    prompt:'Quel mot français vient de "animus" ?',
+    choices:["animer","âme","animation","tous"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q72',
+    prompt:'Quel mot français vient de "bellum" ?',
+    choices:["bellicose","belligérant","rebelle","tous"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q73',
+    prompt:'Quel mot français vient de "accipere" ?',
+    choices:["accepter","accueillir","réception","acquisition"],
+    correctIndex:1, // réponse B
+    answerFreeform:""
+  },
+  {
+    id:'q74',
+    prompt:'Le radical de "corpus" signifie…',
+    choices:["corps","coeur","air","âme"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q75',
+    prompt:'Le radical "aqu-" renvoie à…',
+    choices:["l’eau","le feu","l’air","la terre"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q76',
+    prompt:'"Bellum" donne en français l’idée de…',
+    choices:["guerre","beauté","bonheur","rapidité"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q77',
+    prompt:'"Animus" donne en français…',
+    choices:["âme","vent","terre","eau"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q78',
+    prompt:'"Accipere" donne en français l’idée de…',
+    choices:["recevoir","partir","voir","aider"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q79',
+    prompt:'À quel groupe appartient "accipere, io" ?',
+    choices:["3e mixte","1er groupe","2e groupe","4e groupe"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q80',
+    prompt:'Quel est l’infinitif latin de "recevoir" ?',
+    choices:["accipere","agere","habere","dare"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q81',
+    prompt:'Quel mot est de la 1re déclinaison ?',
+    choices:["puella","dominus","bellum","oppidum"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q82',
+    prompt:'Quel mot est de la 2e déclinaison masc. ?',
+    choices:["dominus","puella","aqua","navis"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q83',
+    prompt:'Quel mot est de la 2e déclinaison neutre ?',
+    choices:["oppidum","dominus","puella","civis"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q84',
+    prompt:'Le pluriel neutre des noms en -um se termine par…',
+    choices:["-a","-i","-es","-us"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q85',
+    prompt:'Le mot "ager" signifie…',
+    choices:["champ","eau","arbre","air"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q86',
+    prompt:'Quel est le nominatif singulier de "dominus" ?',
+    choices:["dominus","domini","dominum","domino"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q87',
+    prompt:'Quel est le génitif singulier de "puella" ?',
+    choices:["puellae","puelli","puellarum","puellam"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q88',
+    prompt:'Quel est l’accusatif singulier de "bellum" ?',
+    choices:["bellum","bella","bellorum","bellam"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q89',
+    prompt:'Quel est le génitif singulier de "bellum" ?',
+    choices:["belli","bellum","bellorum","bello"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q90',
+    prompt:'Quel est l’accusatif de "dominus" ?',
+    choices:["dominum","dominus","domino","dominos"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q91',
+    prompt:'Quel est le datif singulier de "puella" ?',
+    choices:["puellae","puellam","puellarum","puellis"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q92',
+    prompt:'Le mot français "agriculture" vient de…',
+    choices:["ager","accipere","aqua","animus"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q93',
+    prompt:'Quel mot français vient de "cum" ?',
+    choices:["compagnon","conduire","courage","connu"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q94',
+    prompt:'Quel mot français vient de "ab" ?',
+    choices:["abandon","abîme","abdominal","absolu"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q95',
+    prompt:'Quel mot vient du radical "corp-" ?',
+    choices:["corporation","coroner","corail","corso"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q96',
+    prompt:'Quel mot vient du radical "anim-" ?',
+    choices:["animosité","animation","animé","tous"],
+    correctIndex:3, // réponse D
+    answerFreeform:""
+  },
+  {
+    id:'q97',
+    prompt:'Quel radical latin donne l’idée de "champ" ?',
+    choices:["agr-","aqu-","bell-","corp-"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q98',
+    prompt:'Quel radical latin donne l’idée de "guerre" ?',
+    choices:["bell-","agr-","aqu-","anim-"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q99',
+    prompt:'Que signifie "cum amico" ?',
+    choices:["avec un ami","sans ami","pour un ami","vers un ami"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q100',
+    prompt:'Que signifie "ab urbe" ?',
+    choices:["depuis la ville","vers la ville","contre la ville","sous la ville"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q101',
+    prompt:'Comment appelle-t-on la science qui classe les êtres vivants ?',
+    choices:["classification","taxonomie","génétique","biophysique"],
+    correctIndex:1,
+    answerFreeform:""
+  },
+  {
+    id:'q102',
+    prompt:'Dans quel grand groupe se trouve l’être humain ?',
+    choices:["mammifères","oiseaux","amphibiens","insectes"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q103',
+    prompt:'Quel groupe possède des plumes ?',
+    choices:["oiseaux","mammifères","reptiles","poissons"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q104',
+    prompt:'Quel groupe pond généralement des œufs et a des écailles ?',
+    choices:["reptiles","mammifères","amphibiens","insectes"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q105',
+    prompt:'Quel groupe vit dans l’eau et respire avec des branchies ?',
+    choices:["poissons","oiseaux","mammifères","insectes"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q106',
+    prompt:'Quel est le nom donné aux animaux à sang chaud ?',
+    choices:["mammifères et oiseaux","reptiles et poissons","amphibiens et insectes","tous les animaux"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q107',
+    prompt:'Quel est le rôle de la bouche dans la digestion ?',
+    choices:["broyer et commencer la digestion","broyer seulement","digérer les graisses","absorber les nutriments"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q108',
+    prompt:'Quel est le rôle de l’estomac ?',
+    choices:["digérer les protéines","absorber les vitamines","digérer le sucre uniquement","respirer"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q109',
+    prompt:'Quel est le rôle de l’intestin grêle ?',
+    choices:["absorber les nutriments","broyer les aliments","stocker les déchets","digérer l’air"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q110',
+    prompt:'Quel est le rôle du gros intestin ?',
+    choices:["absorber l’eau","absorber les protéines","faire circuler le sang","produire l’air"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q111',
+    prompt:'Quels nutriments donnent de l’énergie rapidement ?',
+    choices:["glucides","lipides","protéines","vitamines"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q112',
+    prompt:'Quels nutriments servent à construire les muscles ?',
+    choices:["protéines","glucides","lipides","sels minéraux"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q113',
+    prompt:'Quels nutriments sont surtout utiles comme réserves d’énergie ?',
+    choices:["lipides","protéines","glucides","fibres"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q114',
+    prompt:'Quels nutriments aident le corps à rester en bonne santé ?',
+    choices:["vitamines","glucides","lipides","protéines"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q115',
+    prompt:'Quel organe produit la bile ?',
+    choices:["foie","estomac","pancréas","gros intestin"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q116',
+    prompt:'Quel organe produit des enzymes digestifs ?',
+    choices:["pancréas","foie","reins","cœur"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q117',
+    prompt:'Quel est le premier maillon d’une chaîne alimentaire ?',
+    choices:["producteur","consommateur primaire","prédateur","décomposeur"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q118',
+    prompt:'Quel organisme est un producteur ?',
+    choices:["plante","vache","loup","hérisson"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q119',
+    prompt:'Quel animal est un consommateur primaire ?',
+    choices:["lapin","loup","chat","serpent"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q120',
+    prompt:'Quel animal est un consommateur secondaire ?',
+    choices:["renard","herbe","champignon","vache"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q121',
+    prompt:'Quel est le rôle des décomposeurs ?',
+    choices:["recycler la matière","dévorer les producteurs","fabriquer la lumière","créer l’énergie"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q122',
+    prompt:'Dans une chaîne alimentaire, l\'énergie circule…',
+    choices:["du producteur vers les consommateurs","dans tous les sens","de bas en haut uniquement","d’un prédateur à un producteur"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q123',
+    prompt:'La pyramide des besoins place en premier…',
+    choices:["les besoins physiologiques","les loisirs","la culture","l’apprentissage"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q124',
+    prompt:'Parmi les besoins physiologiques on trouve…',
+    choices:["manger","aller à l’école","être aimé","faire du sport"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q125',
+    prompt:'Quel besoin correspond au fait d’être en sécurité ?',
+    choices:["besoin de sécurité","besoin d’estime","besoin d’appartenance","besoin de réalisation"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q126',
+    prompt:'Quel besoin correspond au fait d’être accepté par un groupe ?',
+    choices:["besoin d’appartenance","besoin physiologique","besoin de sécurité","besoin de création"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q127',
+    prompt:'Quel besoin correspond au fait de réaliser ses projets ?',
+    choices:["besoin d’accomplissement","besoin de sécurité","besoin physiologique","besoin social"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q128',
+    prompt:'Quel est l’organe principal de la respiration ?',
+    choices:["poumons","foie","cœur","estomac"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q129',
+    prompt:'Quel gaz devons-nous respirer pour vivre ?',
+    choices:["oxygène","azote","hélium","CO₂"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q130',
+    prompt:'Quel gaz rejetons-nous en respirant ?',
+    choices:["CO₂","oxygène","nitrogène","vapeur d’eau"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q131',
+    prompt:'Comment s’appelle le mouvement où l’air entre dans les poumons ?',
+    choices:["inspiration","expiration","transpiration","dilatation"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q132',
+    prompt:'Comment s’appelle le mouvement où l’air sort des poumons ?',
+    choices:["expiration","inspiration","évaporation","respiration"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q133',
+    prompt:'Quel organe sépare la cage thoracique de l’abdomen et aide à respirer ?',
+    choices:["diaphragme","pancréas","rate","intestin"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q134',
+    prompt:'Comment l’oxygène passe-t-il dans le sang ?',
+    choices:["grâce aux alvéoles","grâce aux nerfs","grâce aux os","grâce à la peau"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q135',
+    prompt:'Que contient le sang pour transporter l’oxygène ?',
+    choices:["globules rouges","globules blancs","plaquettes","fibres rouges"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q136',
+    prompt:'Que permettent les vitamines ?',
+    choices:["maintenir le corps en bonne santé","donner toute l’énergie","construire les muscles","digérer plus vite"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q137',
+    prompt:'Que deviennent les aliments dans l’intestin ?',
+    choices:["ils sont transformés en nutriments","ils sont stockés","ils deviennent de l’air","ils deviennent du sang"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q138',
+    prompt:'Quel système permet de transformer les aliments ?',
+    choices:["système digestif","système respiratoire","système nerveux","système musculaire"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q139',
+    prompt:'Quel est le rôle de l’eau dans le corps ?',
+    choices:["hydrater et transporter les nutriments","donner de l’énergie immédiate","changer en graisse","faire respirer"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q140',
+    prompt:'Un être vivant qui mange des plantes est…',
+    choices:["herbivore","carnivore","omnivore","insectivore"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q141',
+    prompt:'Un être vivant qui mange de tout est…',
+    choices:["omnivore","carnivore","herbivore","granivore"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q142',
+    prompt:'Un être vivant qui mange surtout de la viande est…',
+    choices:["carnivore","herbivore","omnivore","producteur"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q143',
+    prompt:'Dans une chaîne alimentaire, un loup est…',
+    choices:["prédateur","producteur","décomposeur","herbivore"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q144',
+    prompt:'Quelle est la dernière étape de la digestion ?',
+    choices:["absorption dans le sang","mastication","passage dans l’estomac","inspiration"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q145',
+    prompt:'Quel organe n’appartient pas au système digestif ?',
+    choices:["cœur","foie","estomac","intestin"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q146',
+    prompt:'Quels aliments contiennent le plus de fibres ?',
+    choices:["fruits et légumes","viandes","produits laitiers","poissons"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q147',
+    prompt:'Quel est le rôle des fibres ?',
+    choices:["aider au transit","donner de l’énergie","former les muscles","hydrater"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q148',
+    prompt:'Quelle date marque le début de la Préhistoire ?',
+    choices:["−3 000 000","−10 000","−3 500","476"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q149',
+    prompt:'Quelle date marque la fin de la Préhistoire ?',
+    choices:["−3 500","476","1492","−10 000"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q150',
+    prompt:'Quelle date marque le début de l’Antiquité ?',
+    choices:["−3 500","−10 000","476","1492"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q151',
+    prompt:'Quelle date marque la fin de l’Antiquité ?',
+    choices:["476","−3 500","1492","1789"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q152',
+    prompt:'Quelle date marque le début du Moyen Âge ?',
+    choices:["476","1492","1789","−3 500"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q153',
+    prompt:'Quelle date marque la fin du Moyen Âge ?',
+    choices:["1492","1789","476","−3500"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q154',
+    prompt:'Quelle date marque le début des Temps modernes ?',
+    choices:["1492","476","1789","1914"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q155',
+    prompt:'Quelle date marque le début de l’époque contemporaine ?',
+    choices:["1789","1492","1914","1945"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q156',
+    prompt:'Quand débute la Première Guerre mondiale ?',
+    choices:["1914","1918","1939","1945"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q157',
+    prompt:'Quand se termine la Première Guerre mondiale ?',
+    choices:["1918","1914","1939","1945"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q158',
+    prompt:'En quelle année commence la Seconde Guerre mondiale ?',
+    choices:["1939","1945","1914","1950"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q159',
+    prompt:'En quelle année se termine la Seconde Guerre mondiale ?',
+    choices:["1945","1939","1918","1955"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q160',
+    prompt:'Quand a eu lieu la Révolution industrielle ?',
+    choices:["19e siècle","15e siècle","20e siècle","18e siècle"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q161',
+    prompt:'Quand Jules César conquiert-il la Gaule ?',
+    choices:["−58 à −52","−100 à −50","0 à 50","52 à 58"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q162',
+    prompt:'1602 appartient à quel siècle ?',
+    choices:["XVIIe","IXe","XXe","XVIe"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q163',
+    prompt:'1805 appartient à quel siècle ?',
+    choices:["XIXe","XVIIIe","XXe","XVIIe"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q164',
+    prompt:'752 appartient à quel siècle ?',
+    choices:["VIIIe","VIe","Xe","VIIe"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q165',
+    prompt:'2001 appartient à quel siècle ?',
+    choices:["XXIe","XXe","XIXe","XXIIe"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q166',
+    prompt:'1492 appartient à quel siècle ?',
+    choices:["XVe","XIVe","XVIe","XVIIe"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q167',
+    prompt:'476 appartient à quel siècle ?',
+    choices:["Ve","IVe","VIe","IIIe"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q168',
+    prompt:'Que signifie "trace du passé" ?',
+    choices:["document créé à l’époque étudiée","un résumé moderne","un film récent","une image retouchée"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q169',
+    prompt:'Un manuel scolaire est…',
+    choices:["un travail postérieur","une trace du passé","une source archéologique","un document officiel"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q170',
+    prompt:'Une mosaïque romaine est…',
+    choices:["un document iconographique","un document écrit","une carte schématique","un document audio-visuel"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q171',
+    prompt:'Une lettre royale est…',
+    choices:["un document écrit officiel","un document schématique","une œuvre littéraire","un travail postérieur"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q172',
+    prompt:'Un tableau représentant un roi est…',
+    choices:["un document iconographique","un texte littéraire","une trace audio-visuelle","un document administratif"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q173',
+    prompt:'Un squelette découvert lors de fouilles est…',
+    choices:["un vestige archéologique","un document écrit","un document audio","un travail postérieur"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q174',
+    prompt:'Une vidéo d’actualité est…',
+    choices:["un document audio-visuel","un document écrit","un travail archéologique","un texte littéraire"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q175',
+    prompt:'Un poème ancien est…',
+    choices:["un texte littéraire","un texte juridique","un document audio","un document schématique"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q176',
+    prompt:'Une carte géographique stylisée est…',
+    choices:["un document schématique","un vestige archéologique","un document audio-visuel","un texte officiel"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q177',
+    prompt:'Une loi signée par un roi est…',
+    choices:["un document officiel","un document littéraire","un document iconographique","un travail postérieur"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q178',
+    prompt:'1492 correspond à…',
+    choices:["la découverte de l’Amérique","la fin de Rome","le début de la Préhistoire","la fin de la Révolution française"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q179',
+    prompt:'476 correspond à…',
+    choices:["la chute de l’Empire romain d’Occident","la découverte de l’Amérique","la Révolution industrielle","la conquête de la Gaule"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q180',
+    prompt:'1789 correspond à…',
+    choices:["la Révolution française","la chute de Rome","la fin de la Seconde Guerre mondiale","la naissance de César"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q181',
+    prompt:'Que marque la date −3 000 000 ?',
+    choices:["les premiers hominidés","la fin de l’Antiquité","la chute de Rome","l’écriture"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q182',
+    prompt:'Que marque la date −10 000 ?',
+    choices:["début de l’agriculture","apparition de l’écriture","chute de Rome","découverte de l’Amérique"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q183',
+    prompt:'−3 500 marque…',
+    choices:["l’invention de l’écriture","la fin du Moyen Âge","la Révolution française","la conquête romaine"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q184',
+    prompt:'Quel événement commence en 1914 ?',
+    choices:["Première Guerre mondiale","Seconde Guerre mondiale","Temps modernes","Antiquité"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q185',
+    prompt:'Quel événement se termine en 1945 ?',
+    choices:["Seconde Guerre mondiale","Première Guerre mondiale","Antiquité","Moyen Âge"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q186',
+    prompt:'Combien de grandes périodes conventionnelles compte-t-on ?',
+    choices:["5","3","4","6"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q187',
+    prompt:'La Révolution française marque le début de…',
+    choices:["l’époque contemporaine","l’Antiquité","la Préhistoire","les Temps modernes"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q188',
+    prompt:'La Renaissance appartient à…',
+    choices:["les Temps modernes","l’Antiquité","l’époque contemporaine","le Moyen Âge"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q189',
+    prompt:'Quel événement marque le passage du Moyen Âge aux Temps modernes ?',
+    choices:["la découverte de l’Amérique","la chute de Rome","l’écriture","la Révolution française"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q190',
+    prompt:'1918 correspond à…',
+    choices:["la fin de la Première Guerre mondiale","la fin de la Seconde Guerre mondiale","la chute de Rome","la Révolution française"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q191',
+    prompt:'Que signifie "travail postérieur" ?',
+    choices:["document créé après l'époque étudiée","document créé à l’époque étudiée","vestige archéologique","document audio-visuel"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q192',
+    prompt:'Que signifie "iconographique" ?',
+    choices:["image","dessin sous forme de carte","texte officiel","vidéo"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q193',
+    prompt:'Que signifie "schématique" ?',
+    choices:["schéma simplifié","image réelle","texte littéraire","vidéo historique"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q194',
+    prompt:'Quelle est la capitale de la Belgique ?',
+    choices:["Bruxelles","Liège","Namur","Anvers"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q195',
+    prompt:'Quel est le chef-lieu de la province de Namur ?',
+    choices:["Namur","Dinant","Arlon","Wavre"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q196',
+    prompt:'Quel est le chef-lieu de la province du Luxembourg ?',
+    choices:["Arlon","Marche-en-Famenne","Bastogne","Bouillon"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q197',
+    prompt:'Quel est le chef-lieu de la province de Liège ?',
+    choices:["Liège","Verviers","Huy","Spa"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q198',
+    prompt:'Quel est le chef-lieu de la province du Hainaut ?',
+    choices:["Mons","Tournai","Charleroi","La Louvière"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q199',
+    prompt:'Quel est le chef-lieu du Brabant wallon ?',
+    choices:["Wavre","Nivelles","Louvain-la-Neuve","Jodoigne"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q200',
+    prompt:'Quel est le chef-lieu du Brabant flamand ?',
+    choices:["Louvain","Malines","Anvers","Aalst"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q201',
+    prompt:'Quel est le chef-lieu de la Flandre orientale ?',
+    choices:["Gand","Bruges","Anvers","Hasselt"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q202',
+    prompt:'Quel est le chef-lieu de la Flandre occidentale ?',
+    choices:["Bruges","Gand","Courtrai","Ostende"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q203',
+    prompt:'Quel est le chef-lieu de la province d’Anvers ?',
+    choices:["Anvers","Lierre","Turnhout","Malines"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q204',
+    prompt:'Quel est le chef-lieu de la province du Limbourg ?',
+    choices:["Hasselt","Genk","Maasmechelen","Sint-Truiden"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q205',
+    prompt:'Combien la Belgique compte-t-elle de provinces ?',
+    choices:["10","8","12","9"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q206',
+    prompt:'Combien de régions compte la Belgique ?',
+    choices:["3","2","4","5"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q207',
+    prompt:'Quelles sont les trois régions belges ?',
+    choices:["Wallonne, Flamande, Bruxelloise","Néerlandaise, Allemande, Wallonne","Flamande, Allemande, Luxembourgeoise","Wallonne, Allemande, Bruxelloise"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q208',
+    prompt:'Combien de communautés compte la Belgique ?',
+    choices:["3","2","4","5"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q209',
+    prompt:'Quel pays borde la Belgique au nord ?',
+    choices:["Les Pays-Bas","La France","L’Allemagne","Le Luxembourg"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q210',
+    prompt:'Quel pays borde la Belgique à l’est ?',
+    choices:["L’Allemagne","La France","Les Pays-Bas","La Suisse"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q211',
+    prompt:'Quel pays borde la Belgique au sud ?',
+    choices:["La France","Le Luxembourg","L’Italie","L’Espagne"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q212',
+    prompt:'Quel pays borde la Belgique au sud-est ?',
+    choices:["Le Luxembourg","La France","L’Allemagne","Les Pays-Bas"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q213',
+    prompt:'Comment s’appelle un cours d’eau qui se jette dans un autre ?',
+    choices:["un affluent","un delta","une source","un rivage"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q214',
+    prompt:'Comment s’appelle l’endroit où un fleuve se jette dans la mer ?',
+    choices:["une embouchure","une source","un affluent","une crue"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q215',
+    prompt:'Comment s’appelle le début d’un cours d’eau ?',
+    choices:["une source","une bouche","un delta","une rive"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q216',
+    prompt:'Comment s’appelle la zone où l’eau douce rencontre l’eau salée ?',
+    choices:["un estuaire","un affluent","une plaine","un plateau"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q217',
+    prompt:'Quel grand fleuve traverse la Belgique ?',
+    choices:["La Meuse","La Loire","Le Rhône","Le Danube"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q218',
+    prompt:'Quelle est la différence entre milieu urbain et rural ?',
+    choices:["urbain = ville, rural = campagne","rural = ville, urbain = campagne","l’un est désert","l’un est montagne"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q219',
+    prompt:'Quel milieu présente une forte densité de population ?',
+    choices:["milieu urbain","milieu rural","milieu agricole","milieu forestier"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q220',
+    prompt:'Quel milieu est surtout associé à l’agriculture ?',
+    choices:["milieu rural","milieu urbain","zone industrielle","zone touristique"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q221',
+    prompt:'Une zone avec beaucoup de bâtiments, commerces et routes est…',
+    choices:["urbaine","rurale","agricole","forestière"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q222',
+    prompt:'Quelle fonction correspond à “habiter” ?',
+    choices:["résidentielle","commerciale","sociale","agricole"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q223',
+    prompt:'Quelle fonction correspond à “acheter et vendre” ?',
+    choices:["commerciale","sociale","touristique","industrielle"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q224',
+    prompt:'Quel type de fonction regroupe écoles et hôpitaux ?',
+    choices:["sociale","résidentielle","industrielle","agricole"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q225',
+    prompt:'Quelle fonction correspond aux usines ?',
+    choices:["industrielle","agricole","résidentielle","commerciale"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q226',
+    prompt:'Quelle fonction correspond aux champs et cultures ?',
+    choices:["agricole","industrielle","forestière","touristique"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q227',
+    prompt:'Quelle fonction correspond aux musées et théâtres ?',
+    choices:["culturelle","sociale","agricole","administrative"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q228',
+    prompt:'Quelle fonction correspond aux administrations locales ?',
+    choices:["administrative","commerciale","résidentielle","touristique"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q229',
+    prompt:'Quelle fonction correspond aux hôtels et parcs d’attraction ?',
+    choices:["touristique","administrative","agricole","militaire"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q230',
+    prompt:'Quel point cardinal est opposé au nord ?',
+    choices:["sud","est","nord-ouest","ouest"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q231',
+    prompt:'Quel point cardinal est à droite du nord sur une carte ?',
+    choices:["est","ouest","sud","haut"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q232',
+    prompt:'Quel point cardinal est à gauche du nord ?',
+    choices:["ouest","est","sud-est","nord-est"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q233',
+    prompt:'Que signifie N-E sur la rose des vents ?',
+    choices:["nord-est","nord-ouest","sud-ouest","sud-est"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q234',
+    prompt:'Que signifie S-O ?',
+    choices:["sud-ouest","sud-est","nord-ouest","nord-est"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q235',
+    prompt:'Si le soleil se lève, il apparaît à…',
+    choices:["l’est","l’ouest","le sud","le nord"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q236',
+    prompt:'Si le soleil se couche, il disparaît à…',
+    choices:["l’ouest","l’est","le sud","le nord"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q237',
+    prompt:'Si tu te diriges vers le nord puis que tu tournes à droite, tu vas vers…',
+    choices:["l’est","l’ouest","le sud","sud-est"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q238',
+    prompt:'Comment appelle-t-on une carte montrant le relief ?',
+    choices:["carte physique","carte politique","carte climatique","carte routière"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q239',
+    prompt:'Comment appelle-t-on une carte montrant les villes et frontières ?',
+    choices:["carte politique","carte physique","carte touristique","carte hydrographique"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q240',
+    prompt:'Comment appelle-t-on une carte montrant les rivières et fleuves ?',
+    choices:["carte hydrographique","carte politique","carte routière","carte climatique"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q241',
+    prompt:'Quel est l\'infinitif du verbe "parlent" ?',
+    choices:["parler","parlait","parlons","parlé"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q242',
+    prompt:'Quel est le temps du verbe "je mangeais" ?',
+    choices:["Imparfait","Présent","Passé composé","Futur"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q243',
+    prompt:'Quel est le temps du verbe "j\'irai" ?',
+    choices:["Futur simple","Présent","Imparfait","Conditionnel"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q244',
+    prompt:'Quel est le participe passé du verbe "faire" ?',
+    choices:["fait","faite","fer","faissé"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q245',
+    prompt:'Quel est l\'infinitif du verbe "nous finirons" ?',
+    choices:["finir","finissons","finirai","finiront"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q246',
+    prompt:'Comment écrit-on correctement ?',
+    choices:["j\'ai pris","j\'ai prit","j\'ai prient","j\'ai prisse"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q247',
+    prompt:'Quel est le féminin du mot "acteur" ?',
+    choices:["actrice","acteure","acteuse","actricee"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q248',
+    prompt:'Quel est le contraire de "rapide" ?',
+    choices:["lent","vite","difficile","paresseux"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q249',
+    prompt:'Quel est le synonyme de "content" ?',
+    choices:["heureux","triste","furieux","fatigué"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q250',
+    prompt:'Quel est le pluriel de "cheval" ?',
+    choices:["chevaux","chevals","chevalles","chevaus"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q251',
+    prompt:'Quel mot est un adjectif ?',
+    choices:["grand","rapidement","chat","manger"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q252',
+    prompt:'Quel mot est un verbe ?',
+    choices:["partir","rapidement","chaise","bleu"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q253',
+    prompt:'Quel mot est un nom commun ?',
+    choices:["maison","rouge","courir","manger"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q254',
+    prompt:'Quelle phrase contient un verbe conjugué ?',
+    choices:["Je lis un livre","Un livre à lire","Pour lire","Le livre lu"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q255',
+    prompt:'Quelle phrase est correcte ?',
+    choices:["Ils sont partis","Il sont parti","Ils sont parti","Il sont partis"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q256',
+    prompt:'Dans "La fille intelligente", quel est le nom ?',
+    choices:["fille","intelligente","la","fille intelligente"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q257',
+    prompt:'Dans "Il parle vite", quel mot est l\'adverbe ?',
+    choices:["vite","parle","il","rapidement"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q258',
+    prompt:'Quel est l\'adjectif dans "un arbre immense" ?',
+    choices:["immense","un","arbre","grande"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q259',
+    prompt:'Quel est le sujet dans "Les enfants jouent" ?',
+    choices:["Les enfants","jouent","les","ils"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q260',
+    prompt:'Quel est le COD dans "Je mange une pomme" ?',
+    choices:["une pomme","je","pomme","mange"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q261',
+    prompt:'Quel est le genre du mot "clé" ?',
+    choices:["féminin","masculin","variable","neutre"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q262',
+    prompt:'Quel est le féminin de "boulanger" ?',
+    choices:["boulangère","boulangerie","boulangé","boulangeuse"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q263',
+    prompt:'Quel est le masculin de "chanteuse" ?',
+    choices:["chanteur","chantiste","chantier","chantre"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q264',
+    prompt:'Comment écrit-on correctement ?',
+    choices:["Il a beaucoup d\'amis","Il a bocoup d\'amis","Il a bocou d\'amis","Il a beaucoup d\'ami"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q265',
+    prompt:'Comment écrit-on correctement ?',
+    choices:["Je suis allé","Je suis aller","Je suis allais","Je suis allée"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q266',
+    prompt:'Quel mot prend un "s" au pluriel ?',
+    choices:["des animaux","des animal","des animauxx","des animaus"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q267',
+    prompt:'Quel mot est un pronom ?',
+    choices:["ils","rouge","maison","courir"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q268',
+    prompt:'Quel mot est un déterminant ?',
+    choices:["les","bleu","danser","rapide"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q269',
+    prompt:'Dans "Elle lit un livre", que représente "un" ?',
+    choices:["déterminant","verbe","nom","adverbe"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q270',
+    prompt:'Quel est le temps du verbe "nous parlions" ?',
+    choices:["Imparfait","Présent","Passé simple","Conditionnel"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q271',
+    prompt:'Comment écrit-on le pluriel de "un journal" ?',
+    choices:["des journaux","des journales","des journalx","des journalles"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q272',
+    prompt:'Quel est le contraire de "difficile" ?',
+    choices:["facile","impossible","rapide","simple"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q273',
+    prompt:'Quel est le synonyme de "commencer" ?',
+    choices:["débuter","arriver","finir","terminer"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q274',
+    prompt:'Quel mot est mal orthographié ?',
+    choices:["apparament","apparemment","apparement","aparament"],
+    correctIndex:1,
+    answerFreeform:""
+  },
+  {
+    id:'q275',
+    prompt:'Quel mot est un verbe du 3e groupe ?',
+    choices:["prendre","aimer","finir","parler"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q276',
+    prompt:'Quel mot fait partie de la famille de "chaleur" ?',
+    choices:["chaud","chaise","charge","chalumeau"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q277',
+    prompt:'Dans "Les oiseaux volent haut", quel est l’adverbe ?',
+    choices:["haut","oiseaux","volent","les"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q278',
+    prompt:'Dans "Le petit chien court", quel est le nom ?',
+    choices:["chien","petit","court","le"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q279',
+    prompt:'Dans "Elle est très intelligente", quel est l\'adverbe ?',
+    choices:["très","elle","intelligente","est"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q280',
+    prompt:'Quel est le verbe conjugué dans "Ils avaient mangé" ?',
+    choices:["avaient","mangé","ils","avaient mangé"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q281',
+    prompt:'Quel temps du verbe : "je finirai" ?',
+    choices:["Futur simple","Présent","Imparfait","Conditionnel"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q282',
+    prompt:'Quelle phrase est correctement accordée ?',
+    choices:["Les fleurs sont belles","Les fleurs sont belle","Les fleur sont belles","Les fleurs sont bel"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q283',
+    prompt:'Quel est le pluriel de "travail" ?',
+    choices:["travaux","travailes","travalles","travailx"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q284',
+    prompt:'Quel est le féminin de "lion" ?',
+    choices:["lionne","lionette","lioncesse","lioune"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q285',
+    prompt:'Quel est le contraire de "gentil" ?',
+    choices:["méchant","fort","petit","rapide"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q286',
+    prompt:'Comment écrit-on correctement ?',
+    choices:["beaucoup","très beaucoups","bocoup","beaucou"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q287',
+    prompt:'Comment écrit-on correctement ?',
+    choices:["Nous irons demain","Nous iront demain","Nous irions demain","Nous irai demain"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q288',
+    prompt:'Quel mot est un adjectif ?',
+    choices:["bruyant","bruit","bruire","bruissant"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q289',
+    prompt:'Comment s’appelle le résultat d’une multiplication ?',
+    choices:["Produit","Somme","Différence","Quotient"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q290',
+    prompt:'Comment s’appelle l’opération inverse de l’addition ?',
+    choices:["Soustraction","Multiplication","Division","Puissance"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q291',
+    prompt:'Que signifie « carré d’un nombre » ?',
+    choices:["Nombre × lui-même","Nombre × 2","Nombre ÷ 2","Nombre + 2"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q292',
+    prompt:'Que signifie « cube d’un nombre » ?',
+    choices:["Nombre × lui-même × lui-même","Nombre × 2","Nombre ÷ 3","Nombre + 3"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q293',
+    prompt:'Comment s’appelle un nombre divisible par 2 ?',
+    choices:["Nombre pair","Nombre impair","Nombre premier","Nombre carré"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q294',
+    prompt:'Comment s’appelle un nombre divisible seulement par 1 et lui-même ?',
+    choices:["Nombre premier","Nombre pair","Nombre composé","Nombre impair"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q295',
+    prompt:'Que signifie « multiple de 5 » ?',
+    choices:["Nombre se terminant par 0 ou 5","Nombre pair","Nombre premier","Nombre négatif"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q296',
+    prompt:'Le PGCD de deux nombres représente…',
+    choices:["Le plus grand diviseur commun","Le plus petit multiple commun","La somme des deux nombres","Leur différence"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q297',
+    prompt:'Le PPCM de deux nombres représente…',
+    choices:["Le plus petit multiple commun","Le plus grand diviseur commun","Leur produit","Leur quotient"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q298',
+    prompt:'Que signifie « proportionnel » ?',
+    choices:["Quand deux valeurs évoluent dans le même rapport","Quand les nombres sont égaux","Quand tout est pair","Quand on ajoute toujours 10"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q299',
+    prompt:'Dans quel ordre applique-t-on les opérations ?',
+    choices:["Parenthèses → × ÷ → + −","× ÷ → Parenthèses → + −","+ − → × ÷ → Parenthèses","Peu importe"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q300',
+    prompt:'Dans 5 + 3 × 4, quoi faire en premier ?',
+    choices:["3 × 4","5 + 3","5 × 3","4 + 5"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q301',
+    prompt:'Dans (12 − 4) × 2, quoi faire en premier ?',
+    choices:["12 − 4","2 × 4","12 × 2","4 × 2"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q302',
+    prompt:'Dans 6 + 12 ÷ 3, quoi faire en premier ?',
+    choices:["12 ÷ 3","6 + 12","6 × 3","3 + 12"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q303',
+    prompt:'Dans (3 + 5²) − 4, quoi faire en premier ?',
+    choices:["5²","3 + 5","3 − 4","5 + 4"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q304',
+    prompt:'Combien font 14 × 5 ?',
+    choices:["70","75","60","65"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q305',
+    prompt:'Combien font 125 ÷ 5 ?',
+    choices:["25","20","30","15"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q306',
+    prompt:'Combien font 18 × 4 ?',
+    choices:["72","64","76","68"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q307',
+    prompt:'Combien font 96 ÷ 12 ?',
+    choices:["8","7","6","9"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q308',
+    prompt:'Combien font 7 × 11 ?',
+    choices:["77","71","72","67"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q309',
+    prompt:'Combien font 3 × 19 ?',
+    choices:["57","63","38","59"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q310',
+    prompt:'Combien font 150 − 75 ?',
+    choices:["75","50","90","100"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q311',
+    prompt:'Combien font 45 + 36 ?',
+    choices:["81","76","79","83"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q312',
+    prompt:'Combien font 8 × 13 ?',
+    choices:["104","96","106","102"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q313',
+    prompt:'Combien font 121 ÷ 11 ?',
+    choices:["11","10","9","12"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q314',
+    prompt:'Que vaut 6² ?',
+    choices:["36","12","30","26"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q315',
+    prompt:'Que vaut 10² ?',
+    choices:["100","20","50","10"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q316',
+    prompt:'Que vaut 2⁴ ?',
+    choices:["16","8","12","14"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q317',
+    prompt:'Que vaut 3³ ?',
+    choices:["27","18","9","21"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q318',
+    prompt:'Que vaut 5² − 2² ?',
+    choices:["21","29","11","19"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q319',
+    prompt:'Quel est le tiers de 27 ?',
+    choices:["9","3","6","12"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q320',
+    prompt:'Quel est le quart de 32 ?',
+    choices:["8","6","4","12"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q321',
+    prompt:'Que vaut 20 % de 50 ?',
+    choices:["10","5","15","20"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q322',
+    prompt:'Que vaut 50 % de 90 ?',
+    choices:["45","30","60","55"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q323',
+    prompt:'Quelle fraction représente la moitié ?',
+    choices:["1/2","1/3","1/4","2/3"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q324',
+    prompt:'Quelle fraction représente un quart ?',
+    choices:["1/4","1/2","1/3","3/4"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q325',
+    prompt:'Simplifie la fraction 12/20',
+    choices:["3/5","2/5","4/5","1/2"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q326',
+    prompt:'Convertis 0,75 en fraction simple',
+    choices:["3/4","1/2","1/3","2/5"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q327',
+    prompt:'Quelle est la formule du périmètre d’un rectangle ?',
+    choices:["2×(L+l)","L×l","2×L","4×L"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q328',
+    prompt:'Quelle est la formule de l’aire d’un rectangle ?',
+    choices:["L×l","2×(L+l)","L+l","L×2"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q329',
+    prompt:'Quelle est la formule de l’aire d’un triangle ?',
+    choices:["(base×hauteur)/2","base×hauteur","(côté×côté)/2","base+hauteur"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q330',
+    prompt:'Quelle est la somme des angles d’un triangle ?',
+    choices:["180°","360°","90°","120°"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q331',
+    prompt:'Comment reconnaît-on un triangle rectangle ?',
+    choices:["Un angle de 90°","Tous les côtés égaux","Deux côtés égaux","Somme angles = 360°"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q332',
+    prompt:'Qu’a de particulier un triangle isocèle ?',
+    choices:["Deux côtés égaux","Trois côtés égaux","Aucun angle droit","Trois angles droits"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q333',
+    prompt:'Qu’a de particulier un triangle équilatéral ?',
+    choices:["Trois côtés égaux","Deux côtés égaux","Un angle droit","Deux angles droits"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q334',
+    prompt:'Combien vaut (−5) + 8 ?',
+    choices:["3","−3","−8","5"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q335',
+    prompt:'Combien vaut (−12) − 3 ?',
+    choices:["−15","−9","−3","15"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q336',
+    prompt:'Quel est le signe du produit de deux nombres négatifs ?',
+    choices:["Positif","Négatif","Zéro","Variable"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q337',
+    prompt:'Quel est le signe du produit d’un positif et d’un négatif ?',
+    choices:["Négatif","Positif","Zéro","Variable"],
+    correctIndex:0,
+    answerFreeform:""
+  },
+  {
+    id:'q338',
+    prompt:'Si 4 pommes coûtent 6 €, combien coûtent 8 pommes ?',
+    choices:["12€","10€","14€","8€"],
+    correctIndex:0,
+    answerFreeform:""
+  }
+];
+/* ---------- Niveaux de difficulté du robot ---------- */
+const BOT_LEVELS = {
+  facile: 0.6,        // 60% de bonnes réponses
+  moyen: 0.75,        // 75%
+  difficile: 0.9,     // 90%
+  tresdifficile: 1.0  // 100%
+};
+
+function getBotCorrectProbability() {
+  const sel = document.getElementById('botLevel');
+  const level = sel?.value || 'moyen';
+  return BOT_LEVELS[level] ?? BOT_LEVELS.moyen;
+}
+
+function updateDifficultyBadge() {
+  const sel = document.getElementById('botLevel');
+  const badge = document.getElementById('qInfo');
+  if (!sel || !badge) return;
+  const labels = {
+    facile: 'Facile',
+    moyen: 'Moyen',
+    difficile: 'Difficile',
+    tresdifficile: 'Très difficile'
+  };
+  badge.textContent = 'Niveau actuel : ' + (labels[sel.value] || 'Moyen');
+}
+
+/* ---------- Utils ---------- */
+const $=id=>document.getElementById(id);
+const randInt=n=>Math.floor(Math.random()*n);
+const shuffle=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+const normalize=s=>(s||'').toString().toLowerCase().replace(/\s+/g,' ').trim();
+const clampLaneLen=v=>Math.max(12,Math.min(18,Math.round(v/3)*3));
+function shuffleChoicesWithAnswer(choices, correctIndex){
+  const paired = choices.map((text, i)=>({ text, i }));
+  const mixed  = shuffle(paired);
+  return { choices: mixed.map(o=>o.text), correctIndex: mixed.findIndex(o=>o.i === (correctIndex ?? 0)) };
+}
+
+/* ---------- État ---------- */
+const state={
+  laneLen:12, cols:13, pathCols:9, margin:2,
+  players:[
+    {
+      id:'A',name:'Joueur 1',house:'rouge',pawn:'Chapeau',pos:0,
+      shieldTurnsLeft:0,confuseTurnsLeft:0,freeTurnsLeft:0,petrifyTurnsLeft:0,
+      noAdvanceTurnsLeft:0,blindQuestionTurnsLeft:0,timeLimitNextTurn:0,
+      atFinishStreak:0,hasTurn:true,isBot:false
+    },
+    {
+      id:'B',name:'Élève de Poudlard',house:'bleu',pawn:'Chouette',pos:0,
+      shieldTurnsLeft:0,confuseTurnsLeft:0,freeTurnsLeft:0,petrifyTurnsLeft:0,
+      noAdvanceTurnsLeft:0,blindQuestionTurnsLeft:0,timeLimitNextTurn:0,
+      atFinishStreak:0,hasTurn:false,isBot:true
+    }
+  ],
+  pool:[],used:new Set(),
+  pendingCorrectNeeded:1,currentQuestion:null,lastInfo:'Prêt.',
+  spellChoice:null,
+  qTimer:null, qDeadline:0, qTickTarget:null
+};
+
+/* ---------- Init sélecteurs pions ---------- */
+function fillPawnSelects(){
+  const opts = Object.keys(PAWNS).map(name=>`<option value="${name}">${name}</option>`).join('');
+  $('p1pawn').innerHTML = opts;
+  $('p1pawn').value = state.players[0].pawn;
+}
+fillPawnSelects();
+
+/* ---------- Vidéo config ---------- */
+(function setupConfigVideo(){
+  const vid=$('configVideo'); if(!vid) return;
+  vid.loop=false;
+  vid.addEventListener('ended',()=>{ try{ vid.currentTime=Math.max(0,(vid.duration||0)-0.05); }catch(e){} vid.pause(); });
+})();
+
+/* ---------- UI helpers ---------- */
+function houseLabel(val){ return {rouge:'Gryffondor',jaune:'Poufsouffle',bleu:'Serdaigle',vert:'Serpentard'}[val] || val; }
+function tokenIconEl(player, isB=false){
+  const el = document.createElement('span'); el.className = 'tokenIcon' + (isB ? ' tokenB' : '');
+  const maisonClass = { rouge:'gryffondor', bleu:'serdaigle', jaune:'poufsouffle', vert:'serpentard' }[player.house] || '';
+  if (maisonClass) el.classList.add(maisonClass);
+  el.style.backgroundColor = COLORS[player.house] || '#fff';
+  const url = PAWNS[player.pawn] || PAWNS['Chapeau'];
+  el.style.webkitMaskImage = `url("${url}")`; el.style.maskImage = `url("${url}")`;
+  el.title = `${player.name} — ${player.pawn}`;
+  return el;
+}
+function updatePreviews(){
+  const [A,B]=state.players;
+  const pA=$('previewA'); pA.style.backgroundColor=COLORS[A.house]; pA.style.webkitMaskImage=`url("${PAWNS[A.pawn]}")`; pA.style.maskImage=`url("${PAWNS[A.pawn]}")`;
+  const pB=$('previewB'); pB.style.backgroundColor=COLORS[B.house]; pB.style.webkitMaskImage=`url("${PAWNS[B.pawn]}")`; pB.style.maskImage=`url("${PAWNS[B.pawn]}")`;
+}
+function setAccent(id, house){ (id==='A'?$('qaA'):$('qaB')).style.setProperty('--accent', COLORS[house] || '#7a64e5'); }
+
+/* ---------- Plateau ---------- */
+const isSpellStep=step=>step>0&&(step%4===3);
+function computeGrid(){
+  const board=$('board'), boardWrap=$('boardWrap');
+  const w = board.clientWidth || boardWrap.clientWidth || 800;
+  const gap=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--gap'))||8;
+
+  let cols=Math.floor((w + gap) / ((parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile'))||72) + gap));
+  cols=Math.max(9, Math.min(17, cols)); if(cols%2===0) cols-=1;
+  let pathCols = Math.max(5, Math.min(cols, 11)); if(pathCols%2===0) pathCols-=1;
+  const margin = Math.floor((cols - pathCols)/2);
+
+  const topRows = Math.ceil(state.laneLen / pathCols), centerRows = 2, bottomRows = Math.ceil(state.laneLen / pathCols);
+  const totalRows = topRows + centerRows + bottomRows;
+
+  const viewportH = window.innerHeight || 800;
+  const headerH = document.querySelector('.gameHeader')?.offsetHeight || 86;
+  const extra = 240;
+  const availableH = Math.max(260, viewportH - headerH - extra);
+
+  const tileFromWidth = Math.floor((w - (cols - 1) * gap) / cols);
+  const tileFromHeight = Math.floor((availableH - (totalRows - 1) * gap) / totalRows);
+
+  let tile = Math.min(tileFromWidth, tileFromHeight);
+  tile = Math.max(44, Math.min(96, tile));
+
+  board.style.setProperty('--cols', cols);
+  board.style.setProperty('--tile', tile + 'px');
+  board.style.setProperty('--token', Math.max(28, Math.round(tile * 0.88)) + 'px');
+
+  state.cols=cols; state.pathCols=pathCols; state.margin=margin;
+}
+function buildPathPositionsTop(laneLen, pathCols, margin, rowOffset, targetCol){
+  const positions=[]; const desiredIndex = (targetCol - margin - 1);
+  const fullRowsBefore = Math.floor((laneLen - 1) / pathCols);
+  const remaining = laneLen - fullRowsBefore * pathCols;
+
+  for(let r=0;r<fullRowsBefore;r++){
+    const ltr=(r%2===0);
+    if(ltr){ for(let i=0;i<pathCols;i++) positions.push({row: rowOffset + r + 1, col: margin + i + 1}); }
+    else   { for(let i=pathCols-1;i>=0;i--) positions.push({row: rowOffset + r + 1, col: margin + i + 1}); }
+  }
+  const r = fullRowsBefore, ltr=(r%2===0);
+  if(ltr){
+    let startIndex = Math.max(0, desiredIndex - (remaining - 1));
+    if(startIndex + remaining - 1 >= pathCols) startIndex = pathCols - remaining;
+    for(let i=0;i<remaining;i++) positions.push({row: rowOffset + r + 1, col: margin + (startIndex + i) + 1});
+  }else{
+    let startIndex = Math.min(pathCols - 1, desiredIndex + (remaining - 1));
+    if(startIndex - (remaining - 1) < 0) startIndex = remaining - 1;
+    for(let i=0;i<remaining;i++) positions.push({row: rowOffset + r + 1, col: margin + (startIndex - i) + 1});
+  }
+  return positions;
+}
+function makeTileEl(step, classes){ const d=document.createElement('div'); d.className=`tile ${classes}`.trim(); d.innerHTML=`<span class="idx">${step}</span>`; return d; }
+function renderBoard(){
+  computeGrid(); const board=$('board'); board.innerHTML='';
+  const cols=state.cols, pathCols=state.pathCols, margin=state.margin;
+  const topRows = Math.ceil(state.laneLen / pathCols);
+  const centerRowStart = topRows + 1, centerSpan = 2;
+  const centerColStart = margin + Math.floor((pathCols-2)/2) + 1;
+  const bottomOffset = centerRowStart + centerSpan - 1, alignCol = centerColStart;
+
+  const pathTop = buildPathPositionsTop(state.laneLen, pathCols, margin, 0, alignCol);
+  pathTop.forEach((pos, step)=>{
+    const classes = (step===0) ? 'start' : (isSpellStep(step) ? 'spell' : 'question');
+    const d = makeTileEl(step, classes);
+    d.style.gridRow = String(pos.row); d.style.gridColumn = String(pos.col);
+    if(state.players[0].pos===step){ const t=document.createElement('div'); t.className='tokens'; t.appendChild(tokenIconEl(state.players[0], false)); d.appendChild(t); }
+    board.appendChild(d);
+  });
+
+  const center = makeTileEl('★','center');
+  center.style.gridRow = `${centerRowStart} / span ${centerSpan}`;
+  center.style.gridColumn = `${centerColStart} / span ${centerSpan}`;
+  const tC = document.createElement('div'); tC.className='tokens';
+  if (state.players[0].pos===state.laneLen){ tC.appendChild(tokenIconEl(state.players[0], false)); }
+  if (state.players[1].pos===state.laneLen){ tC.appendChild(tokenIconEl(state.players[1], true)); }
+  center.appendChild(tC); board.appendChild(center);
+
+  const pathBottomTopLike = buildPathPositionsTop(state.laneLen, pathCols, margin, 0, alignCol);
+  const bottomRows = Math.ceil(state.laneLen / pathCols);
+  pathBottomTopLike.forEach((pos, step)=>{
+    const rowFromBottom = bottomOffset + (bottomRows - pos.row + 1);
+    const classes = (step===0) ? 'start' : (isSpellStep(step) ? 'spell' : 'question');
+    const d = makeTileEl(step, classes);
+    d.style.gridRow = String(rowFromBottom); d.style.gridColumn = String(pos.col);
+    if(state.players[1].pos===step){ const t=document.createElement('div'); t.className='tokens'; t.appendChild(tokenIconEl(state.players[1], true)); d.appendChild(t); }
+    board.appendChild(d);
+  });
+}
+function renderPanels(){
+  const [A,B]=state.players;
+  $('shieldA').textContent=String(A.shieldTurnsLeft); $('shieldB').textContent=String(B.shieldTurnsLeft);
+  $('posA').textContent=String(A.pos); $('posB').textContent=String(B.pos);
+  $('turnA').textContent=A.hasTurn?'✅':'—'; $('turnB').textContent=B.hasTurn?'✅':'—';
+  $('effectsA').textContent=[
+    A.confuseTurnsLeft>0?'Confundus':'',
+    A.freeTurnsLeft>0?'Oubliettes':'',
+    A.petrifyTurnsLeft>0?'Pétrifié':'',
+    A.noAdvanceTurnsLeft>0?'Tarantallegra':'',
+    A.blindQuestionTurnsLeft>0?'Assurdiato':'',
+    A.timeLimitNextTurn>0?`Arresto (${A.timeLimitNextTurn}s)`:''
+  ].filter(Boolean).join(', ')||'—';
+  $('effectsB').textContent=[
+    B.confuseTurnsLeft>0?'Confundus':'',
+    B.freeTurnsLeft>0?'Oubliettes':'',
+    B.petrifyTurnsLeft>0?'Pétrifié':'',
+    B.noAdvanceTurnsLeft>0?'Tarantallegra':'',
+    B.blindQuestionTurnsLeft>0?'Assurdiato':'',
+    B.timeLimitNextTurn>0?`Arresto (${B.timeLimitNextTurn}s)`:''
+  ].filter(Boolean).join(', ')||'—';
+  $('lastInfo').textContent=state.lastInfo; updatePreviews();
+}
+function renderAll(){ renderBoard(); renderPanels(); }
+window.addEventListener('resize',()=>{ renderBoard(); });
+
+/* ---------- QA helpers ---------- */
+function qaEl(id){
+  return {
+    wrap: $(id==='A'?'qaA':'qaB'), title: $(id==='A'?'turnTitleA':'turnTitleB'),
+    readyBox:$(id==='A'?'readyA':'readyB'), readyTxt:$(id==='A'?'readyTextA':'readyTextB'), btnReady:$(id==='A'?'btnReadyA':'btnReadyB'),
+    qBox:$(id==='A'?'questionA':'questionB'), qPlayer:$(id==='A'?'qPlayerA':'qPlayerB'),
+    qInfo:$(id==='A'?'qInfoTextA':'qInfoTextB'), qHint:$(id==='A'?'qHintA':'qHintB'),
+    qPrompt:$(id==='A'?'qPromptA':'qPromptB'), qChoices:$(id==='A'?'qChoicesA':'qChoicesB'),
+    qFree:$(id==='A'?'qFreeA':'qFreeB'), qInput:$(id==='A'?'qInputA':'qInputB'), qSubmit:$(id==='A'?'qSubmitA':'qSubmitB'),
+    wait:$(id==='A'?'waitA':'waitB'), spellBox:$(id==='A'?'spellBoxA':'spellBoxB'),
+    spellOptions:$(id==='A'?'spellOptionsA':'spellOptionsB'), spellCast:$(id==='A'?'spellCastA':'spellCastB'),
+  };
+}
+const currentPlayer=()=>state.players.find(p=>p.hasTurn);
+const otherPlayer=()=>state.players.find(p=>!p.hasTurn);
+function setActiveQA(activeId){
+  const A = qaEl('A'), B = qaEl('B'), isA = (activeId==='A');
+  A.wrap.classList.toggle('active', isA); A.wrap.classList.toggle('inactive', !isA);
+  B.wrap.classList.toggle('active', !isA); B.wrap.classList.toggle('inactive', isA);
+  if(isA){ A.title.textContent = `Tour de ${state.players[0].name}`; B.title.textContent = 'En attente de l’adversaire…'; }
+  else   { A.title.textContent = 'En attente de l’adversaire…'; B.title.textContent = `Tour de ${state.players[1].name}`; }
+  A.wait.style.display = isA ? 'none' : 'block'; B.wait.style.display = isA ? 'block' : 'none';
+  const inactive = isA ? B : A; inactive.readyBox.style.display='none'; inactive.qBox.style.display='none'; inactive.spellBox.classList.remove('show');
+}
+function endTurn(msg){
+  const me=currentPlayer(), other=otherPlayer();
+  me.confuseTurnsLeft=0; me.freeTurnsLeft=0;
+  me.hasTurn=false; other.hasTurn=true;
+  state.lastInfo=msg||'À l’adversaire.';
+  if(other.petrifyTurnsLeft>0){
+    other.petrifyTurnsLeft=0; other.hasTurn=false; me.hasTurn=true;
+    state.lastInfo=`${other.name} est pétrifié et passe son tour.`;
+  }
+  renderAll(); prepareTurnReady();
+}
+
+/* ---------- Timer (Arresto) ---------- */
+function clearQuestionTimer(){ if(state.qTimer){ clearInterval(state.qTimer); state.qTimer=null } state.qDeadline=0; state.qTickTarget=null; }
+function startQuestionTimer(player, seconds){
+  // Pas de timer pour le robot
+  if (player.isBot) return;
+
+  clearQuestionTimer();
+  const QA = qaEl(player.id); state.qDeadline = Date.now() + (seconds*1000); state.qTickTarget = player.id;
+  const update = ()=>{
+    const remainMs = Math.max(0, state.qDeadline - Date.now());
+    const remain = Math.ceil(remainMs/1000);
+    QA.qHint.textContent = `⏳ ${remain}s`;
+    if(remain<=0){ clearQuestionTimer(); if(state.currentQuestion){ submitAnswer(-1, player, true); } }
+  };
+  update(); state.qTimer = setInterval(update, 250);
+}
+
+/* ---------- Questions ---------- */
+const remainingIds=()=>state.pool.map(q=>q.id).filter(id=>!state.used.has(id));
+function nextQuestionPreparedFor(player){
+  const rem=remainingIds(); if(!rem.length) return null;
+  const id=rem[randInt(rem.length)], base=state.pool.find(x=>x.id===id);
+  state.used.add(id);
+  const q=JSON.parse(JSON.stringify(base));
+
+  if(q.choices && q.choices.length){
+    const cleaned = q.choices.filter(c => c != null && String(c).trim() !== "");
+    if (cleaned.length >= 2){
+      const origCorrect = q.correctIndex ?? 0;
+      const mappedCorrect = Math.max(0, Math.min(origCorrect, cleaned.length-1));
+      const { choices, correctIndex } = shuffleChoicesWithAnswer(cleaned, mappedCorrect);
+      q.choices = choices; q.correctIndex = correctIndex;
+    }else{
+      q.answerFreeform = cleaned[0] ?? ""; q.choices = null; q.correctIndex = null;
+    }
+  }
+  if(player.freeTurnsLeft>0){
+    if(q.choices && q.choices.length){
+      const idx=q.correctIndex ?? 0;
+      q.answerFreeform=q.choices[idx]; q.choices=null; q.correctIndex=null;
+    }
+  }
+  return q;
+}
+
+/* ---------- Robot : réponse automatique avec difficulté ---------- */
+function botAutoAnswer(player){
+  if (!player.isBot) return;
+  const q = state.currentQuestion;
+  if (!q) return;
+  const QA = qaEl(player.id);
+
+  const prob = getBotCorrectProbability();
+  const willBeCorrect = Math.random() < prob;
+
+  // Question à choix multiples
+  if (q.choices && q.choices.length){
+    let idx;
+    const n = q.choices.length;
+    const correctIdx = (typeof q.correctIndex === 'number') ? q.correctIndex : 0;
+
+    if (willBeCorrect) {
+      idx = correctIdx;
+    } else {
+      const incorrects = [];
+      for (let i = 0; i < n; i++) {
+        if (i !== correctIdx) incorrects.push(i);
+      }
+      idx = incorrects.length ? incorrects[randInt(incorrects.length)] : randInt(n);
+    }
+
+    const btn = QA.qChoices.children[idx];
+    if (btn) btn.click();
+  }
+  // Question à réponse libre
+  else {
+    const answer = willBeCorrect ? q.answerFreeform : "Je ne sais pas";
+    QA.qInput.value = answer;
+    QA.qSubmit.click();
+  }
+}
+
+/* ---------- Affichage question ---------- */
+function showQuestionFor(player){
+  const QA = qaEl(player.id); setActiveQA(player.id);
+  const q=nextQuestionPreparedFor(player);
+  if(!q){
+    QA.readyBox.style.display='none'; QA.qBox.style.display='block';
+    QA.qPlayer.textContent=player.name; QA.qInfo.textContent='Plus de questions';
+    QA.qPrompt.textContent='Le paquet est vide.'; QA.qChoices.innerHTML=''; QA.qFree.style.display='none'; QA.qHint.textContent='';
+    return;
+  }
+  state.currentQuestion=q;
+
+  QA.readyBox.style.display='none'; QA.qBox.style.display='block';
+  QA.qPlayer.textContent=player.name;
+  QA.qInfo.textContent=(player.pos===state.laneLen)?'Épreuve du centre (3 bonnes d’affilée)':((player.confuseTurnsLeft>0)?'Confundus — question':'Question');
+  QA.qPrompt.textContent=q.prompt; QA.qChoices.innerHTML=''; QA.qFree.style.display='none'; QA.qHint.textContent='';
+
+  if(q.choices && q.choices.length){
+    q.choices.forEach((c,i)=>{
+      const b=document.createElement('button');
+      b.textContent=`${String.fromCharCode(65+i)}. ${c}`;
+      b.onclick=()=>submitAnswer(i,player);
+      QA.qChoices.appendChild(b);
+    });
+  }else{
+    QA.qFree.style.display='flex'; QA.qInput.value='';
+    QA.qSubmit.onclick=()=>submitAnswer(QA.qInput.value,player);
+  }
+
+  // Assurdiato
+  if (player.blindQuestionTurnsLeft > 0){
+    if (q.choices && q.choices.length){
+      QA.qPrompt.textContent = '❓❓❓ (Assurdiato : la question est masquée)';
+      player.blindQuestionTurnsLeft = 0;
+    } else {
+      player.blindQuestionTurnsLeft = 0;
+    }
+  }
+  // Arresto momentum
+  if (player.timeLimitNextTurn && player.timeLimitNextTurn > 0){
+    startQuestionTimer(player, player.timeLimitNextTurn);
+    player.timeLimitNextTurn = 0;
+  } else {
+    QA.qHint.textContent = '';
+  }
+
+  // Si c'est le robot, il répond automatiquement
+  if (player.isBot){
+    setTimeout(()=>botAutoAnswer(player), 700);
+  }
+}
+
+/* ---------- Flux de tour ---------- */
+function prepareTurnReady(){
+  const me=currentPlayer(), QAme = qaEl(me.id);
+  setActiveQA(me.id);
+  QAme.spellBox.classList.remove('show'); QAme.spellOptions.innerHTML=''; QAme.spellCast.disabled=true;
+
+  state.pendingCorrectNeeded = (me.confuseTurnsLeft>0) ? 2 : 1;
+
+  // Tour du robot : il enchaîne automatiquement
+  if (me.isBot){
+    QAme.readyBox.style.display='none';
+    QAme.qBox.style.display='none';
+    QAme.wait.style.display='none';
+    showQuestionFor(me);
+    return;
+  }
+
+  // Tour du joueur humain
+  QAme.readyBox.style.display='flex'; QAme.qBox.style.display='none';
+  QAme.readyTxt.textContent=`${me.name}, es-tu prêt ?`;
+  QAme.btnReady.onclick=()=>{ showQuestionFor(me); };
+}
+
+function submitAnswer(ans,player,forcedByTimer=false){
+  clearQuestionTimer();
+  const QA = qaEl(player.id);
+  const q=state.currentQuestion; let correct=false;
+  if(q.choices && q.choices.length){ correct=Number.isInteger(ans)&&ans===q.correctIndex; }
+  else{ correct=normalize(ans)===normalize(q.answerFreeform); }
+  state.currentQuestion=null;
+
+  if(player.pos===state.laneLen){
+    if(correct){
+      player.atFinishStreak=(player.atFinishStreak||0)+1; QA.qInfo.textContent=`Épreuve du centre — ${player.atFinishStreak}/3`;
+      if(player.atFinishStreak>=3){ QA.qBox.style.display='none'; showVictory(player); return; }
+      else{ showQuestionFor(player); return; }
+    }else{
+      player.atFinishStreak=0; player.pos=Math.max(0,player.pos-3);
+      QA.qBox.style.display='none'; state.lastInfo=`${player.name} échoue au centre et recule de 3 cases.`; renderAll(); endTurn(); return;
+    }
+  }
+
+  if(correct){
+    state.pendingCorrectNeeded-=1;
+    if(state.pendingCorrectNeeded>0){ showQuestionFor(player); return; }
+    else{ QA.qBox.style.display='none'; advanceAfterValidation(player); return; }
+  }else{
+    QA.qBox.style.display='none'; endTurn(forcedByTimer?`${player.name} a dépassé le temps imparti.`:undefined);
+  }
+}
+
+function advanceAfterValidation(player){
+  if (player.noAdvanceTurnsLeft && player.noAdvanceTurnsLeft > 0){
+    player.noAdvanceTurnsLeft = 0;
+    state.lastInfo = `${player.name} a bien répondu, mais danse sur place (Tarantallegra) et n'avance pas.`;
+    renderAll(); endTurn(); return;
+  }
+  if(player.pos<state.laneLen) player.pos+=1;
+  state.lastInfo=`${player.name} avance d’une case.`; renderAll();
+
+  if(player.pos===state.laneLen){ showQuestionFor(player); return; }
+  if(isSpellStep(player.pos)){ openSpellChoice(player); } else { endTurn(); }
+}
+
+/* ---------- Sorts ---------- */
+function openSpellChoice(player){
+  const QA = qaEl(player.id); setActiveQA(player.id);
+  const opts = shuffle([...SPELLS]).slice(0,3);
+  state.spellChoice = {playerId:player.id, options:opts, selected:null};
+  QA.spellOptions.innerHTML = '';
+  opts.forEach((name, idx)=>{
+    const card = document.createElement('div'); card.className='spellCard'; card.tabIndex=0;
+    card.onclick = ()=> selectSpellCard(player.id, idx);
+    card.onkeydown = (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectSpellCard(player.id, idx);} };
+    const icon = document.createElement('div'); icon.className='spellIcon'; icon.style.backgroundImage = `url("${SPELL_ICONS[name]}")`;
+    const label = document.createElement('div'); label.className='spellName'; label.textContent=name;
+    card.appendChild(icon); card.appendChild(label); QA.spellOptions.appendChild(card);
+  });
+  QA.spellCast.disabled=true; QA.spellCast.onclick = ()=> castSelectedSpell(player);
+  QA.spellBox.classList.add('show'); QA.spellBox.classList.add('castPulse'); setTimeout(()=>QA.spellBox.classList.remove('castPulse'), 820);
+  state.lastInfo=`${player.name} a atteint une case sort.`; renderPanels();
+
+  // Robot : choix et lancement automatiques
+  if (player.isBot){
+    const idx = randInt(opts.length);
+    selectSpellCard(player.id, idx);
+    setTimeout(()=>castSelectedSpell(player), 900);
+  }
+}
+function selectSpellCard(playerId, idx){
+  const QA = qaEl(playerId), cards = Array.from(QA.spellOptions.children);
+  cards.forEach((c,i)=>c.classList.toggle('selected', i===idx));
+  if(state.spellChoice && state.spellChoice.playerId===playerId){ state.spellChoice.selected = idx; QA.spellCast.disabled = (idx==null); }
+}
+function showSpellPopup(casterName, spellName, targetName){
+  const pop = $('spellPopup'), title = $('spTitle'), img = $('spImg');
+  title.textContent = `${casterName} lance “${spellName}” à ${targetName} !`;
+  img.style.backgroundImage = `url("${SPELL_ICONS[spellName]}")`;
+  pop.classList.add('show');
+  return new Promise(resolve=>{ setTimeout(()=>{ pop.classList.remove('show'); resolve(); }, 2100); });
+}
+function showProtegoBlockPopup(casterName, spellName, targetName){
+  const pop = $('spellPopup'), title = $('spTitle'), img = $('spImg');
+  title.textContent = `${targetName} était protégé par son charme du bouclier ! Le sort n’a aucun effet.`;
+  img.style.backgroundImage = `url("${SPELL_ICONS['Protego']}")`;
+  pop.classList.add('show');
+  return new Promise(resolve=>{ setTimeout(()=>{ pop.classList.remove('show'); resolve(); }, 2100); });
+}
+function applySpell(spell,caster,target){
+  if (spell!=='Protego' && target.shieldTurnsLeft>0){
+    target.shieldTurnsLeft = Math.max(0, target.shieldTurnsLeft - 1);
+    state.lastInfo = `${target.name} bloque le sort avec Protego.`; return;
+  }
+  switch(spell){
+    case 'Expelliarmus': target.pos=Math.max(0,target.pos-1); state.lastInfo=`${target.name} recule d’1 case.`; break;
+    case 'Protego': caster.shieldTurnsLeft = (caster.shieldTurnsLeft||0) + 1; state.lastInfo=`${caster.name} gagne 1 bouclier (persistant).`; break;
+    case 'Stupefix': target.pos=Math.max(0,target.pos-2); state.lastInfo=`${target.name} recule de 2 cases.`; break;
+    case 'Confundus': target.confuseTurnsLeft=1; state.lastInfo=`${target.name} devra répondre à 2 questions à son prochain tour.`; break;
+    case 'Petrificus totalus': target.petrifyTurnsLeft=1; state.lastInfo=`${target.name} passera son prochain tour.`; break;
+    case 'Accio': caster.pos=Math.min(state.laneLen,caster.pos+2); state.lastInfo=`${caster.name} avance de 2 cases.`; break;
+    case 'Oubliettes': target.freeTurnsLeft=1; state.lastInfo=`Prochaine question de ${target.name} en réponse libre (1 tour).`; break;
+    case 'Tarantallegra': target.noAdvanceTurnsLeft = 1; state.lastInfo = `${target.name} ne pourra pas avancer à sa prochaine bonne réponse.`; break;
+    case 'Bombarda':
+      if (target.shieldTurnsLeft > 0){
+        target.shieldTurnsLeft = 0; target.pos = Math.max(0, target.pos - 1);
+        state.lastInfo = `Le bouclier de ${target.name} explose ! ${target.name} recule d’1 case.`;
+      } else {
+        target.pos = Math.max(0, target.pos - 2);
+        state.lastInfo = `${target.name} est soufflé et recule de 2 cases.`;
+      } break;
+    case 'Assurdiato': target.blindQuestionTurnsLeft = 1; state.lastInfo = `Au prochain tour, ${target.name} ne verra pas l'énoncé (Assurdiato).`; break;
+    case 'Arresto momentum': target.timeLimitNextTurn = 5; state.lastInfo = `${target.name} n’aura que 5 secondes pour répondre à sa prochaine question.`; break;
+  }
+}
+function castSelectedSpell(player){
+  const QA = qaEl(player.id);
+  if(!state.spellChoice || state.spellChoice.playerId!==player.id) return;
+  const {options, selected} = state.spellChoice;
+  if(selected==null) return;
+  const spell = options[selected];
+  const me = player, other = otherPlayer();
+
+  QA.spellCast.disabled = true;
+
+  if(spell!=='Protego' && other.shieldTurnsLeft>0){
+    showProtegoBlockPopup(me.name, spell, other.name).then(()=>{
+      other.shieldTurnsLeft = Math.max(0, other.shieldTurnsLeft - 1);
+      state.lastInfo = `${other.name} bloque le sort avec Protego.`;
+      QA.spellBox.classList.remove('show'); state.spellChoice = null; renderAll(); setTimeout(()=> endTurn(state.lastInfo), 250);
+    });
+    return;
+  }
+  showSpellPopup(me.name, spell, other.name).then(()=>{
+    applySpell(spell, me, other);
+    state.lastInfo = `${me.name} a lancé ${spell}.`;
+    QA.spellBox.classList.remove('show'); state.spellChoice = null; renderAll(); setTimeout(()=> endTurn(state.lastInfo), 250);
+  });
+}
+
+$('btnSpellInfo').onclick=()=>{ const el=$('spellHelp'); el.style.display=(el.style.display==='block'?'none':'block'); };
+
+/* ---------- Victoire ---------- */
+function showVictory(player) {
+  const pop = $('victoryPopup');
+  const msg = $('victoryMsg');
+  msg.textContent = `${player.name} remporte le duel !`;
+  pop.classList.add('show');
+
+  let mount = $('victoryTokenMount');
+  if (!mount) {
+    const box = pop.querySelector('.victoryBox');
+    mount = document.createElement('div');
+    mount.id = 'victoryTokenMount';
+    box.insertBefore(mount, msg);
+  }
+
+  mount.innerHTML = '';
+  const isB = (player.id === 'B');
+  const token = tokenIconEl(player, isB);
+  mount.appendChild(token);
+
+  void token.offsetWidth;
+  token.classList.add('victoryToken');
+
+  const confettiWrap = $('confettiWrap');
+  confettiWrap.innerHTML = '';
+  const colors = ['#FFD700', '#FFF8DC', '#DAA520', '#F1C40F', '#D4AF37'];
+  for (let i = 0; i < 50; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.left = `${Math.random() * 100}%`;
+    c.style.top = `${30 + Math.random() * 20}%`;
+    c.style.animationDelay = `${Math.random() * 0.6}s`;
+    c.style.transform = `rotate(${Math.random() * 360}deg)`;
+    confettiWrap.appendChild(c);
+  }
+
+  $('btnRestart').onclick = () => {
+    pop.classList.remove('show');
+    $('screenGame').style.display = 'none';
+    $('screenConfig').style.display = 'block';
+    document.querySelectorAll('button').forEach(b => b.disabled = false);
+  };
+}
+
+/* ---------- Lancement partie (solo vs robot) ---------- */
+$('laneLen').addEventListener('input',()=>{
+  $('laneLen').value=clampLaneLen(parseInt($('laneLen').value||'12',10));
+});
+
+$('btnStart').onclick=()=>{
+  state.laneLen=clampLaneLen(parseInt($('laneLen').value||'12',10));
+
+  // Joueur humain
+  const humanName = $('p1name').value || 'Joueur 1';
+  const humanHouse = $('p1house').value;
+  const humanPawn = $('p1pawn').value;
+
+  state.players[0].name = humanName;
+  state.players[0].house = humanHouse;
+  state.players[0].pawn = humanPawn;
+
+  // Robot : Élève de Poudlard, maison & pion aléatoires différents
+  const houseKeys = Object.keys(COLORS);
+  const pawnKeys = Object.keys(PAWNS);
+
+  const botHouseOptions = houseKeys.filter(h=>h!==humanHouse);
+  const botHouse = botHouseOptions.length ? botHouseOptions[randInt(botHouseOptions.length)] : humanHouse;
+
+  const botPawnOptions = pawnKeys.filter(p=>p!==humanPawn);
+  const botPawn = botPawnOptions.length ? botPawnOptions[randInt(botPawnOptions.length)] : humanPawn;
+
+  state.players[1].name  = 'Élève de Poudlard';
+  state.players[1].house = botHouse;
+  state.players[1].pawn  = botPawn;
+
+  // Mise à jour affichage config robot
+  $('botName').textContent  = state.players[1].name;
+  $('botHouse').textContent = houseLabel(botHouse);
+  $('botPawn').textContent  = botPawn;
+
+  // Remplir le pool de questions
+  state.pool = QUESTIONS.slice();
+  state.used = new Set();
+
+  // Reset état joueurs
+  state.players.forEach((p,i)=>{
+    p.pos=0; p.shieldTurnsLeft=0; p.confuseTurnsLeft=0; p.freeTurnsLeft=0; p.petrifyTurnsLeft=0;
+    p.noAdvanceTurnsLeft=0; p.blindQuestionTurnsLeft=0; p.timeLimitNextTurn=0;
+    p.atFinishStreak=0; p.hasTurn=(i===0);
+  });
+
+  state.currentQuestion=null;
+  state.lastInfo='Partie démarrée.';
+  state.spellChoice=null;
+
+  const vid=$('configVideo'); if(vid){ try{vid.pause();}catch(e){} }
+
+  $('screenConfig').style.display='none'; $('screenGame').style.display='block';
+  $('nameA').textContent=state.players[0].name; $('nameB').textContent=state.players[1].name;
+  $('houseA').textContent=houseLabel(state.players[0].house); $('houseB').textContent=houseLabel(state.players[1].house);
+  $('lenA').textContent=String(state.laneLen); $('lenB').textContent=String(state.laneLen);
+
+  updatePreviews(); setAccent('A', state.players[0].house); setAccent('B', state.players[1].house);
+  computeGrid(); renderAll(); prepareTurnReady();
+};
+
+/* ---------- Init difficulté & rendu ---------- */
+window.addEventListener('DOMContentLoaded', ()=>{
+  const sel = document.getElementById('botLevel');
+  if (sel) {
+    sel.value = 'moyen';
+    sel.addEventListener('change', updateDifficultyBadge);
+    updateDifficultyBadge();
+  }
+  renderAll();
+});
+</script>
+</body>
+</html>
